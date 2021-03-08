@@ -55,6 +55,7 @@ private:
 	@brief 타이머, 작업 스레드 초기화.
 	*/
 	void InitThreads();
+
 	/**
 	@brief 방 초기화.
 	*/
@@ -77,7 +78,15 @@ private:
 	@param[in] et 이벤트 종류
 	@param[in] delay_time 이벤트 실행까지의 딜레이
 	*/
-	void add_event(int client, EVENT_TYPE et, int delay_time);
+	void AddEvent(int client, EVENT_TYPE et, int delay_time);
+
+	/**
+	@brief 도착한 패킷을 재조립한다.
+	@param[in] client 수신한 대상
+	@param[in] buffer 수신 버퍼
+	@param[in] recvLength 수신한 크기
+	*/
+	void ParsePacket(Client* client, void* buffer, size_t recvLength);
 
 	/**
 	@brief 타이머 스레드 함수

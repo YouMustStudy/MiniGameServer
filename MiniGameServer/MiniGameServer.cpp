@@ -115,14 +115,14 @@ void MiniGameServer::WorkerThread()
 		switch (overEx->EventType())
 		{
 		case EV_RECV:
-			ParsePacket(client);
+			ParsePacket(client, overEx->Data(), ReceivedBytes);
 			client->SetRecv();
 			break;
 
 		case EV_UPDATE:
 		{
 			m_room.update(0.0f);
-			add_event(static_cast<int>(key), EV_UPDATE, UPDATE_INTERVAL);
+			AddEvent(static_cast<int>(key), EV_UPDATE, UPDATE_INTERVAL);
 			delete overEx;
 			break;
 		}
@@ -185,10 +185,37 @@ void MiniGameServer::add_timer(Event& ev)
 	timer_queue.push(ev);
 	timer_lock.unlock();
 }
-void MiniGameServer::add_event(int client, EVENT_TYPE et, int milisec_delay)
+void MiniGameServer::AddEvent(int client, EVENT_TYPE et, int milisec_delay)
 {
 	Event ev{ client, et, high_resolution_clock::now() + chrono::milliseconds(milisec_delay) };
 	add_timer(ev);
+}
+
+void MiniGameServer::ParsePacket(Client* client, void* buffer, size_t recvLength)
+{
+	size_t copySize = 0;
+	char* buf_ptr = reinterpret_cast<char*>(buffer);
+	size_t& savedSize = client->savedSize;
+	size_t& needSize = client->needSize;
+	while (0 < recvLength) {
+		if (recvLength + savedSize >= needSize) {
+			copySize = needSize - savedSize;
+			client->savedPacket.EmplaceBack(buf_ptr, copySize);
+			if (sizeof(DEFAULT_PACKET) == needSize) {
+				needSize = reinterpret_cast<DEFAULT_PACKET*>(client->savedPacket.data)->size;
+				savedSize -= copySize;
+				continue;
+			}
+			//패킷 처리하기
+			buf_ptr += copySize;
+			recvLength -= copySize;
+			needSize = sizeof(DEFAULT_PACKET);
+		}
+		else {
+			client->savedPacket.EmplaceBack(buf_ptr, recvLength);
+			recvLength = 0;
+		}
+	}
 }
 
 void MiniGameServer::send_packet(Client* client, void* buff)
