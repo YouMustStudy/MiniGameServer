@@ -1,0 +1,114 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="소스 파일">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="헤더 파일">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="리소스 파일">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Common">
+      <UniqueIdentifier>{48c7ce6f-d577-4a67-958f-d1eddf5c254d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utills">
+      <UniqueIdentifier>{78e84eee-0c35-4ee6-837e-c61203a9f09b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common\Client">
+      <UniqueIdentifier>{21b8484a-6f07-4be8-8cee-990342614470}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common\Csockaddr">
+      <UniqueIdentifier>{c21ae7ef-a1e8-483c-991f-e7ca941c9e57}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common\Event">
+      <UniqueIdentifier>{4217d3a9-cd0d-41bf-a746-df693a6b3f3b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common\NwModule">
+      <UniqueIdentifier>{63aeeeb3-ba77-4573-b2c8-7176bbec9c65}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common\OverEx">
+      <UniqueIdentifier>{0ab230e4-176c-46b9-b18d-76f0d563357e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common\Containers">
+      <UniqueIdentifier>{28b83539-fcd7-4b32-9ae7-fe051b0b6f8f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Room">
+      <UniqueIdentifier>{514e7701-9890-4d1d-a2bb-5bc49ea93b71}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="MiniGameServer.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Utills\Logger.cpp">
+      <Filter>Utills</Filter>
+    </ClCompile>
+    <ClCompile Include="Utills\UtilFunc.cpp">
+      <Filter>Utills</Filter>
+    </ClCompile>
+    <ClCompile Include="protocol.h">
+      <Filter>헤더 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Common\NWMODULE.cpp">
+      <Filter>Common\NwModule</Filter>
+    </ClCompile>
+    <ClCompile Include="Common\Event.cpp">
+      <Filter>Common\Event</Filter>
+    </ClCompile>
+    <ClCompile Include="Common\Client.cpp">
+      <Filter>Common\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="Common\PacketVector.cpp">
+      <Filter>Common\Containers</Filter>
+    </ClCompile>
+    <ClCompile Include="Common\CSOCKADDR_IN.cpp">
+      <Filter>Common\Csockaddr</Filter>
+    </ClCompile>
+    <ClCompile Include="Common\OverEx.cpp">
+      <Filter>Common\OverEx</Filter>
+    </ClCompile>
+    <ClCompile Include="Rooms\DMRoom.cpp">
+      <Filter>Room</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="MiniGameServer.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Utills\Logger.h">
+      <Filter>Utills</Filter>
+    </ClInclude>
+    <ClInclude Include="Utills\UtilFunc.h">
+      <Filter>Utills</Filter>
+    </ClInclude>
+    <ClInclude Include="Common\CSOCKADDR_IN.h">
+      <Filter>Common\Csockaddr</Filter>
+    </ClInclude>
+    <ClInclude Include="Common\NWMODULE.h">
+      <Filter>Common\NwModule</Filter>
+    </ClInclude>
+    <ClInclude Include="Common\Event.h">
+      <Filter>Common\Event</Filter>
+    </ClInclude>
+    <ClInclude Include="Common\Client.h">
+      <Filter>Common\Client</Filter>
+    </ClInclude>
+    <ClInclude Include="Common\PacketVector.h">
+      <Filter>Common\Containers</Filter>
+    </ClInclude>
+    <ClInclude Include="Common\OverEx.h">
+      <Filter>Common\OverEx</Filter>
+    </ClInclude>
+    <ClInclude Include="Rooms\DMRoom.h">
+      <Filter>Room</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
