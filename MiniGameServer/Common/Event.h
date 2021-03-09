@@ -6,7 +6,7 @@
 @author Gurnwoo Kim
 */
 struct Event {
-	int targetID; ///< target obj id.
+	size_t targetID; ///< target obj id.
 	int eventType; ///< event type for iocp.
 	std::chrono::high_resolution_clock::time_point wakeupTime; ///< after arriving this time, event will execute.
 

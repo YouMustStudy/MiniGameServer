@@ -3,6 +3,7 @@
 //Server -> Client.
 enum SC_PACKET
 {
+	SC_CONNECT_OK,				///< 연결 성공
 	SC_LOGIN_OK,				///< 로그인 성공
 	SC_LOGIN_FAIL,				///< 로그인 실패
 	SC_SPAWN_CHARACTER,			///< 캐릭터 오브젝트 추가
@@ -34,6 +35,16 @@ class DEFAULT_PACKET
 public:
 	PACKET_SIZE size{0};
 	PACKET_TYPE type{0};
+};
+
+class SC_PACKET_CONNECT_OK : public DEFAULT_PACKET
+{
+public:
+	SC_PACKET_CONNECT_OK()
+	{
+		size = sizeof(SC_PACKET_CONNECT_OK);
+		type = SC_CONNECT_OK;
+	};
 };
 
 class SC_PACKET_LOGIN_OK : public DEFAULT_PACKET
@@ -133,9 +144,9 @@ public:
 		dir[1] = dy;
 	};
 	int uid{};
-	float pos[2];
-	float dir[2];
-	char animIndex;
+	float pos[2]{};
+	float dir[2]{};
+	char animIndex{0};
 };
 
 class SC_PACKET_SPAWN_EFFECT : public DEFAULT_PACKET

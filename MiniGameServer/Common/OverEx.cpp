@@ -50,7 +50,7 @@ void OverEx::Init(size_t buf_size)
 	packet = new char[buf_size];
 	memset(&over, 0, sizeof(WSAOVERLAPPED));
 	wsabuf.buf = packet;
-	wsabuf.len = buf_size;
+	wsabuf.len = static_cast<ULONG>(buf_size);
 }
 void OverEx::Reset()
 {

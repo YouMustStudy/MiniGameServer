@@ -20,8 +20,8 @@
 
 #pragma comment(lib, "ws2_32")
 
-enum EVENT_TYPE;
-enum CL_STATE;
+enum CL_STATE { ST_IDLE, ST_QUEUE, ST_PLAY };
+enum EVENT_TYPE { EV_ACCEPT, EV_DISCONN, EV_RECV, EV_SEND, EV_UPDATE };
 constexpr auto RECV_BUF_SIZE = 512;
 
 /**
@@ -31,20 +31,20 @@ constexpr auto RECV_BUF_SIZE = 512;
 class MiniGameServer
 {
 private:
-	int UPDATE_INTERVAL{ 20 };		///< Interval of updateing time. Millisecond.
-	int NUM_THREADS{ 6 };
+	size_t UPDATE_INTERVAL{ 20 };		///< Interval of updateing time. Millisecond.
+	size_t NUM_THREADS{ 6 };
 	short SERVER_PORT{ 15600 };
 
-	std::atomic<int> playerNum;		///< 총 접속 인원 수
-	HANDLE m_iocp;					///< 작업 스레드용 IOCP 핸들
-	SOCKET m_listenSocket;			///< 리슨 소켓
+	std::atomic<int> m_playerNum;		///< 총 접속 인원 수
+	HANDLE m_iocp;						///< 작업 스레드용 IOCP 핸들
+	SOCKET m_listenSocket;				///< 리슨 소켓
 
 	DMRoom m_room;							///< 게임이 실행되는 단위
 
 	//타이머
-	std::priority_queue<Event> timer_queue; ///< 타이머 큐
-	std::mutex timer_lock;					///< 타이머 큐 락
-	std::vector<std::thread> m_threads;		///< 스레드 목록
+	std::priority_queue<Event> m_timerQueue;	///< 타이머 큐
+	std::mutex m_timerLock;						///< 타이머 큐 락
+	std::vector<std::thread> m_threads;			///< 스레드 목록
 
 	/**
 	@brief WSA 초기화.
@@ -70,7 +70,7 @@ private:
 	@brief 타이머 이벤트를 추가한다.
 	@param[in] ev 추가할 이벤트
 	*/
-	void add_timer(Event& ev);
+	void AddTimer(Event& ev);
 
 	/**
 	@brief 타이머 이벤트를 추가한다.
@@ -78,7 +78,7 @@ private:
 	@param[in] et 이벤트 종류
 	@param[in] delay_time 이벤트 실행까지의 딜레이
 	*/
-	void AddEvent(int client, EVENT_TYPE et, int delay_time);
+	void AddEvent(size_t client, int et, size_t delay_time);
 
 	/**
 	@brief 도착한 패킷을 재조립한다.
@@ -86,7 +86,14 @@ private:
 	@param[in] buffer 수신 버퍼
 	@param[in] recvLength 수신한 크기
 	*/
-	void ParsePacket(Client* client, void* buffer, size_t recvLength);
+	void ParsePacket(size_t idx, Client* client, void* buffer, size_t recvLength);
+
+	/**
+	@brief 패킷 해석 후 적절한 매니저에게 통보한다.
+	@param[in] idx 수신한 유저의 인덱스
+	@param[in] buffer 패킷이 담긴 버퍼
+	*/
+	void ProcessPacket(size_t idx, void* buffer);
 
 	/**
 	@brief 타이머 스레드 함수
@@ -97,35 +104,20 @@ private:
 	*/
 	void WorkerThread();
 
-	/**
-	@brief 플레이어 종료 처리
-	*/
-	void DisconnectPlayer(Client* client);
+	void PostEvent(size_t key, int eventType);
+	void PostEvent(size_t key, int eventType, void* args);
+
+	MiniGameServer();
+public:
+	static MiniGameServer& Instance();
+	~MiniGameServer();
 
 	/**
 	@brief 유저에게 패킷을 전송함
 	@param[in] client 전송받을 유저
 	@param[in] buff 전송할 데이터
 	*/
-	void send_packet(Client* client, void* buff);
-
-	/**
-	@brief Send default type packet to client.
-	@param client target client.
-	@param TYPE packet type.
-	*/
-	void send_packet_default(Client* client, int TYPE);
-
-	/**
-	@brief Process authorize packet received from clients.
-	@param client sender.
-	@param buffer packet data.
-	*/
-	void ProcessAuthoPacket(Client* client, void* buffer);
-
-public:
-	MiniGameServer();
-	~MiniGameServer();
+	void SendPacket(Client* client, void* buff);
 
 	/**
 	@brief 서버를 시작함.

@@ -1,12 +1,8 @@
-#include "MiniGameServer.h"
-
-
+ï»¿#include "MiniGameServer.h"
+#include "UserManager.h"
 
 using namespace std;
 using namespace chrono;
-
-enum EVENT_TYPE { EV_RECV, EV_SEND, EV_UPDATE };
-enum CL_STATE { ST_IDLE, ST_QUEUE, ST_PLAY };
 
 MiniGameServer::MiniGameServer() :
 	m_listenSocket(INVALID_SOCKET)
@@ -16,6 +12,11 @@ MiniGameServer::MiniGameServer() :
 	InitRooms();
 	InitWSA();
 	InitThreads();
+}
+MiniGameServer& MiniGameServer::Instance()
+{
+	static MiniGameServer* miniGameServer = new MiniGameServer();
+	return *miniGameServer;
 }
 MiniGameServer::~MiniGameServer()
 {
@@ -34,6 +35,7 @@ void MiniGameServer::InitWSA()
 	m_iocp = CreateIoCompletionPort(INVALID_HANDLE_VALUE, nullptr, NULL, 0);
 	if(INVALID_HANDLE_VALUE == m_iocp)
 		Logger::WsaLog("Error at Create IOCP", WSAGetLastError());
+	UserManager::Instance().SetIOCPHandle(m_iocp);
 
 	m_listenSocket = WSASocketW(AF_INET, SOCK_STREAM, IPPROTO_TCP, nullptr, 0, WSA_FLAG_OVERLAPPED);
 	if (INVALID_SOCKET == m_listenSocket)
@@ -46,14 +48,12 @@ void MiniGameServer::InitWSA()
 		Logger::WsaLog("Error at Bind()", WSAGetLastError());
 	if (SOCKET_ERROR == ::listen(m_listenSocket, SOMAXCONN))
 		Logger::WsaLog("Error at Listen()", WSAGetLastError());
-
-	//CreateIoCompletionPort(reinterpret_cast<HANDLE>(m_Lobby.socket), m_iocp, reinterpret_cast<ULONG_PTR>(&m_Lobby), 0);
 }
 
 void MiniGameServer::InitThreads()
 {
 	Logger::Log("Initializing Threads...");
-	for (UINT i = 0; i < NUM_THREADS; ++i)
+	for (size_t i = 0; i < NUM_THREADS; ++i)
 		m_threads.emplace_back(&MiniGameServer::WorkerThread, this);
 	m_threads.emplace_back(&MiniGameServer::TimerThread, this);
 }
@@ -76,15 +76,9 @@ void MiniGameServer::Run()
 	SOCKET clientSocket{};
 	while (true)
 	{
-		//Å¬¶óÀÌ¾ðÆ® »ý¼º
 		clientSocket = accept(m_listenSocket, clientAddr.GetSockAddr(), clientAddr.Len());
-		Client* client = new Client;
-		client->socket = clientSocket;
-		client->recvOver.Init(RECV_BUF_SIZE);
-		client->recvOver.SetEvent(EV_RECV);
-		CreateIoCompletionPort(reinterpret_cast<HANDLE>(client->socket), m_iocp, reinterpret_cast<ULONG_PTR>(client), 0);
-		client->SetRecv();
-		std::wcout << L"[CLIENT - " << clientSocket << L"] Accept" << std::endl;
+		if (INVALID_SOCKET != clientSocket)
+			PostEvent(0, EV_ACCEPT, new AcceptInfo{clientSocket, *reinterpret_cast<SOCKADDR_IN*>(clientAddr.GetSockAddr())});
 	}
 }
 void MiniGameServer::WorkerThread()
@@ -95,34 +89,37 @@ void MiniGameServer::WorkerThread()
 
 	while (true)
 	{
-		GetQueuedCompletionStatus(m_iocp, &ReceivedBytes, &key, &over, INFINITE);
+		BOOL success = GetQueuedCompletionStatus(m_iocp, &ReceivedBytes, &key, &over, INFINITE);
 
-		Client* client = reinterpret_cast<Client*>(key);
 		OverEx* overEx = reinterpret_cast<OverEx*>(over);
-		if (nullptr == client)
-			continue;
-		if (nullptr == overEx)
+		Client* client = reinterpret_cast<Client*>(overEx);
+
+		if (nullptr == client || nullptr == overEx)
 			continue;
 
-		if (0 == ReceivedBytes) {
+		if (false == success || 0 == ReceivedBytes) {
 			if (EV_SEND == overEx->EventType())
 				delete overEx;
 			else if(EV_RECV == overEx->EventType())
-				DisconnectPlayer(client);
+				UserManager::Instance().PushJob(USER_DISCONN, reinterpret_cast<void*>(key));
 			continue;
 		}
 
 		switch (overEx->EventType())
 		{
+		case EV_ACCEPT:
+			UserManager::Instance().PushJob(USER_ACCEPT, overEx->Overlapped()->hEvent);
+			break;
+
 		case EV_RECV:
-			ParsePacket(client, overEx->Data(), ReceivedBytes);
+			ParsePacket(key, client, overEx->Data(), ReceivedBytes);
 			client->SetRecv();
 			break;
 
 		case EV_UPDATE:
 		{
-			m_room.update(0.0f);
-			AddEvent(static_cast<int>(key), EV_UPDATE, UPDATE_INTERVAL);
+			m_room.Update();
+			AddEvent(key, EV_UPDATE, UPDATE_INTERVAL);
 			delete overEx;
 			break;
 		}
@@ -139,99 +136,135 @@ void MiniGameServer::WorkerThread()
 	}
 }
 
-void MiniGameServer::DisconnectPlayer(Client* client)
+void MiniGameServer::ProcessPacket(size_t idx, void* buffer)
 {
-	if (nullptr != client)
+	if (nullptr == buffer) return;
+
+	auto dp = reinterpret_cast<DEFAULT_PACKET*>(buffer);
+	switch (dp->type)
 	{
-		if (client->socket != INVALID_SOCKET) {
-			closesocket(client->socket);
-			client->socket = INVALID_SOCKET;
-		}
-		delete client;
+	case CS_REQEUST_LOGIN:
+		UserManager::Instance().PushJob(USER_LOGIN,
+			new LoginInfo{idx});
+		break;
+
+	case CS_KEYUP:
+		break;
+
+	case CS_KEYDOWN:
+		break;
+
+	default:
+		Logger::Log("ì²˜ë¦¬ë˜ì§€ ì•Šì€ ìœ ì € íŒ¨í‚· ìˆ˜ì‹ " + std::to_string(dp->type));
+		break;
 	}
 }
 
 void MiniGameServer::TimerThread()
 {
 	while (true) {
-		timer_lock.lock();
-		if (true == timer_queue.empty()) {
-			timer_lock.unlock();
+		m_timerLock.lock();
+		if (true == m_timerQueue.empty()) {
+			m_timerLock.unlock();
 			this_thread::sleep_for(3ms);
 			continue;
 		}
 
-		const Event& ev = timer_queue.top();
+		const Event& ev = m_timerQueue.top();
 
 		if (ev.wakeupTime > high_resolution_clock::now()) {
-			timer_lock.unlock();
+			m_timerLock.unlock();
 			this_thread::sleep_for(3ms);
 			continue;
 		}
 		Event p_ev = ev;
-		timer_queue.pop();
-		timer_lock.unlock();
+		m_timerQueue.pop();
+		m_timerLock.unlock();
 
-		OverEx* overEx = new OverEx;
-		::memset(overEx, 0, sizeof(OverEx));
-		overEx->SetEvent(p_ev.eventType);
-
-		PostQueuedCompletionStatus(m_iocp, 1, p_ev.targetID, overEx->Overlapped());
+		PostEvent(p_ev.targetID, p_ev.eventType);
 	}
 }
-void MiniGameServer::add_timer(Event& ev) 
+void MiniGameServer::AddTimer(Event& ev)
 {
-	timer_lock.lock();
-	timer_queue.push(ev);
-	timer_lock.unlock();
+	m_timerLock.lock();
+	m_timerQueue.push(ev);
+	m_timerLock.unlock();
 }
-void MiniGameServer::AddEvent(int client, EVENT_TYPE et, int milisec_delay)
+void MiniGameServer::AddEvent(size_t client, int et, size_t milisec_delay)
 {
 	Event ev{ client, et, high_resolution_clock::now() + chrono::milliseconds(milisec_delay) };
-	add_timer(ev);
+	AddTimer(ev);
 }
-
-void MiniGameServer::ParsePacket(Client* client, void* buffer, size_t recvLength)
+void MiniGameServer::ParsePacket(size_t idx, Client* client, void* buffer, size_t recvLength)
 {
+	if (nullptr == client || nullptr == buffer)
+		return;
+
 	size_t copySize = 0;
-	char* buf_ptr = reinterpret_cast<char*>(buffer);
+	char* bufPos = reinterpret_cast<char*>(buffer);
 	size_t& savedSize = client->savedSize;
 	size_t& needSize = client->needSize;
+
 	while (0 < recvLength) {
-		if (recvLength + savedSize >= needSize) {
+		if (recvLength + savedSize >= needSize) 
+		{
 			copySize = needSize - savedSize;
-			client->savedPacket.EmplaceBack(buf_ptr, copySize);
-			if (sizeof(DEFAULT_PACKET) == needSize) {
-				needSize = reinterpret_cast<DEFAULT_PACKET*>(client->savedPacket.data)->size;
-				savedSize -= copySize;
+			client->savedPacket.EmplaceBack(bufPos, copySize);
+
+			if (sizeof(PACKET_SIZE) == needSize) 
+			{
+				needSize = *reinterpret_cast<PACKET_SIZE*>(client->savedPacket.data);
 				continue;
 			}
-			//ÆÐÅ¶ Ã³¸®ÇÏ±â
-			buf_ptr += copySize;
+
+			//íŒ¨í‚· ì²˜ë¦¬
+			ProcessPacket(idx, client->savedPacket.data);
+
+			savedSize = 0;
+			bufPos += copySize;
 			recvLength -= copySize;
 			needSize = sizeof(DEFAULT_PACKET);
 		}
-		else {
-			client->savedPacket.EmplaceBack(buf_ptr, recvLength);
+		else
+		{
+			client->savedPacket.EmplaceBack(bufPos, recvLength);
 			recvLength = 0;
 		}
 	}
 }
 
-void MiniGameServer::send_packet(Client* client, void* buff)
+void MiniGameServer::SendPacket(Client* client, void* buff)
 {
-	if (nullptr != client &&
-		nullptr != buff)
+	if (nullptr != client && nullptr != buff)
 	{
-		OverEx* sendOver = new OverEx{ EV_SEND, buff };
-		WSASend(client->socket, sendOver->Buffer(), 1, 0, 0, sendOver->Overlapped(), 0);
+		if (INVALID_SOCKET != client->socket)
+		{
+			OverEx* sendOver = new OverEx{ EV_SEND, buff };
+			if(nullptr != sendOver)
+				WSASend(client->socket, sendOver->Buffer(), 1, 0, 0, sendOver->Overlapped(), 0);
+		}
 	}
 }
-void MiniGameServer::send_packet_default(Client* client, int TYPE)
+
+void MiniGameServer::PostEvent(size_t key, int eventType)
 {
-	if (nullptr != client)
+	OverEx* overEx = new OverEx;
+	if (nullptr != overEx)
 	{
-		DEFAULT_PACKET dp;
-		send_packet(client, &dp);
+		::memset(overEx, 0, sizeof(OverEx));
+		overEx->SetEvent(eventType);
+		PostQueuedCompletionStatus(m_iocp, 1, key, overEx->Overlapped());
+	}
+}
+
+void MiniGameServer::PostEvent(size_t key, int eventType, void* args)
+{
+	OverEx* overEx = new OverEx;
+	if (nullptr != overEx)
+	{
+		::memset(overEx, 0, sizeof(OverEx));
+		overEx->SetEvent(eventType);
+		overEx->Overlapped()->hEvent = args;
+		PostQueuedCompletionStatus(m_iocp, 1, key, overEx->Overlapped());
 	}
 }

@@ -1,8 +1,6 @@
 #include "CLIENT.h"
 #include "..\Utills\Logger.h"
 
-int Client::BUFFER_SIZE = 1024;
-
 void Client::SetRecv()
 {
 	recvOver.Reset();

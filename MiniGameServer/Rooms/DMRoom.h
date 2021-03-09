@@ -14,8 +14,8 @@ public:
 	virtual void Init();
 	virtual bool Regist();
 	virtual void Disconnect();
-	virtual void start();
-	virtual bool update(float elapsedTime);
+	virtual void Start();
+	virtual bool Update();
 
 	PacketVector eventData; //전송될 이벤트 패킷(플레이어 힛, 리스폰 등)
 	PacketVector infoData;  //전송될 위치정보 패킷
@@ -27,11 +27,11 @@ private:
 	PacketVector remainPackets;
 	PacketVector processPackets;
 
-	float delta_time;
-	float left_time;
+	float delta_time{};
+	float left_time{};
 	
-	void ProcessPackets();
+	void ParsePackets();
 	bool GameLogic();
 	void SendGameState();
-	void ProcessPacket();
+	void ProcessPacket(const char* buffer);
 };

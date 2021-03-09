@@ -112,7 +112,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
@@ -142,13 +142,15 @@
     <ClCompile Include="Common\Client.cpp" />
     <ClCompile Include="Common\CSOCKADDR_IN.cpp" />
     <ClCompile Include="Common\Event.cpp" />
-    <ClCompile Include="Common\NWMODULE.cpp" />
     <ClCompile Include="Common\OverEx.cpp" />
     <ClCompile Include="Common\PacketVector.cpp" />
+    <ClCompile Include="LockFreeQueue.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MatchQueue.cpp" />
     <ClCompile Include="MiniGameServer.cpp" />
     <ClCompile Include="protocol.h" />
     <ClCompile Include="Rooms\DMRoom.cpp" />
+    <ClCompile Include="UserManager.cpp" />
     <ClCompile Include="Utills\Logger.cpp" />
     <ClCompile Include="Utills\UtilFunc.cpp" />
   </ItemGroup>
@@ -156,11 +158,13 @@
     <ClInclude Include="Common\Client.h" />
     <ClInclude Include="Common\CSOCKADDR_IN.h" />
     <ClInclude Include="Common\Event.h" />
-    <ClInclude Include="Common\NWMODULE.h" />
     <ClInclude Include="Common\OverEx.h" />
     <ClInclude Include="Common\PacketVector.h" />
+    <ClInclude Include="LockFreeQueue.h" />
+    <ClInclude Include="MatchQueue.h" />
     <ClInclude Include="MiniGameServer.h" />
     <ClInclude Include="Rooms\DMRoom.h" />
+    <ClInclude Include="UserManager.h" />
     <ClInclude Include="Utills\Logger.h" />
     <ClInclude Include="Utills\UtilFunc.h" />
   </ItemGroup>
