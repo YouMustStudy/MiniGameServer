@@ -4,34 +4,49 @@
 #include <set>
 #include <DirectXCollision.h>
 #include <atomic>
+#include <vector>
 #include "..\Common\PacketVector.h"
+#include "..\LockFreeQueue.h"
 
-class DMRoom
+class Client;
+/**
+룸
+실제 게임이 이뤄지는 객체
+룸 포인터의 수정은 해당 객체 내에서만 발생한다.
+*/
+class DMRoom : public LockFreeQueue
 {
 public:
 	DMRoom();
 	virtual ~DMRoom();
-	virtual void Init();
-	virtual bool Regist();
-	virtual void Disconnect();
-	virtual void Start();
-	virtual bool Update();
+
+	void SetQueueType(QueueType queType);
+
+	void Init();								//Not Thread-Safe, RoomManager에서만 호출할 것.
+	void Regist(std::vector<Client*> clients);	//Not Thread-Safe, RoomManager에서만 호출할 것.
+	bool IsEnd() { return isEnd; };
+
+
+protected:
+	virtual void ProcessJob(Job job) override;
+
+private:
+	static constexpr long long UPDATE_INTERVAL = 20;
+
+	std::chrono::high_resolution_clock::time_point currentUpdateTime;
+	std::chrono::high_resolution_clock::time_point lastUpdateTime;
 
 	PacketVector eventData; //전송될 이벤트 패킷(플레이어 힛, 리스폰 등)
 	PacketVector infoData;  //전송될 위치정보 패킷
-private:
-	std::chrono::high_resolution_clock::time_point current_update_time;
-	std::chrono::high_resolution_clock::time_point last_update_time;
-
-	std::mutex packet_lock;
-	PacketVector remainPackets;
-	PacketVector processPackets;
+	bool isEnd{false};
 
 	float delta_time{};
 	float left_time{};
-	
-	void ParsePackets();
+
 	bool GameLogic();
 	void SendGameState();
-	void ProcessPacket(const char* buffer);
+
+	void Disconnect();
+	void End();
+	void Update();
 };

@@ -1,6 +1,9 @@
 #include "DMRoom.h"
 #include "..\Common\Client.h"
 #include "..\Utills\Logger.h"
+#include "..\protocol.h"
+#include "..\RoomManager.h"
+#include "..\MiniGameServer.h"
 
 DMRoom::DMRoom()
 {
@@ -12,50 +15,57 @@ DMRoom::~DMRoom()
 
 void DMRoom::Init()
 {
+	lastUpdateTime = std::chrono::high_resolution_clock::now();
 }
 
-bool DMRoom::Regist()
+void DMRoom::Regist(std::vector<Client*> clients)
 {
-	return true;
+	//유저 등록 처리
+	return;
+}
+
+void DMRoom::ProcessJob(Job job)
+{
+	switch (job.first)
+	{
+	case CS_UPDATE:
+		Update();
+		break;
+
+	default:
+		Logger::Log("처리되지 않은 룸 잡 발견");
+		break;
+	}
 }
 
 void DMRoom::Disconnect()
 {
+	//유저를 룸에서 삭제 및 유저 매니저에 통보.
 }
 
-void DMRoom::Start()
+void DMRoom::End()
 {
-	last_update_time = std::chrono::high_resolution_clock::now();
+	//유저 종료처리 및 룸 매니저에 통보
+	RoomManager::Instance().PushJob(RMGR_DESTROY, reinterpret_cast<void*>(queueType.second));
 }
 
-bool DMRoom::Update()
+void DMRoom::Update()
 {
-	current_update_time = std::chrono::high_resolution_clock::now();
-	delta_time = std::chrono::duration<float>(current_update_time - last_update_time).count();
-	last_update_time = current_update_time;
-	ParsePackets();
-    GameLogic();
+	currentUpdateTime = std::chrono::high_resolution_clock::now();
+	delta_time = std::chrono::duration<float>(currentUpdateTime - lastUpdateTime).count();
+	
+    isEnd = GameLogic();
 	SendGameState();
-    return false;
+	if (true == isEnd)
+		End();
+	else
+		MiniGameServer::Instance().AddEvent(queueType.second, EV_UPDATE, lastUpdateTime + std::chrono::milliseconds(UPDATE_INTERVAL));
+	lastUpdateTime = currentUpdateTime;
 }
 
-void DMRoom::ParsePackets()
+void DMRoom::SetQueueType(QueueType queType)
 {
-	processPackets.Clear();
-	processPackets.EmplaceBack(remainPackets.data, remainPackets.len);
-	remainPackets.Clear();
-
-	char* packet_pos = processPackets.data;
-	PACKET_SIZE packet_size = 0;
-	size_t packet_length = processPackets.len;
-	while (packet_length > 0)
-	{
-		DEFAULT_PACKET* dp = reinterpret_cast<DEFAULT_PACKET*>(packet_pos);
-		packet_size = dp->size;
-		ProcessPacket(packet_pos);
-		packet_length -= packet_size;
-		packet_pos += packet_size;
-	}
+	queueType = queType;
 }
 
 bool DMRoom::GameLogic()
@@ -66,19 +76,6 @@ bool DMRoom::GameLogic()
 void DMRoom::SendGameState()
 {
 	//Send data to clients.
-
 	eventData.Clear();
 	infoData.Clear();
-}
-
-void DMRoom::ProcessPacket(const char* buffer)
-{
-	if (nullptr == buffer) return;
-	const DEFAULT_PACKET* dp = reinterpret_cast<const DEFAULT_PACKET*>(buffer);
-	switch (dp->type)
-	{
-	default:
-		Logger::Log("NO TYPE PACKET FOR ROOM");
-		break;
-	}
 }

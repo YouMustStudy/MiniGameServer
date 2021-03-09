@@ -1,5 +1,9 @@
 #include "LockFreeQueue.h"
-Concurrency::concurrent_queue<size_t> g_GlobalJob = Concurrency::concurrent_queue<size_t>();
+#include "UserManager.h"
+#include "RoomManager.h"
+#include "Rooms/DMRoom.h"
+
+Concurrency::concurrent_queue<QueueType> g_GlobalJob = Concurrency::concurrent_queue<QueueType>();
 thread_local bool TLS_isJob = false;
 
 void LockFreeQueue::PushJob(size_t jobType, void* arg)
@@ -43,15 +47,21 @@ void LockFreeQueue::ProcessGlobalJob()
 {
 	while (false == g_GlobalJob.empty())
 	{
-		size_t jobTarget{};
-		if (true == g_GlobalJob.try_pop(jobTarget))
+		QueueType qType{};
+		if (true == g_GlobalJob.try_pop(qType))
 		{
-			switch (GlobalQueueType(jobTarget))
+			switch (GlobalQueueType(qType.first))
 			{
 			case GlobalQueueType::USER_MANAGER:
+				UserManager::Instance().Flush();
 				break;
 
 			case GlobalQueueType::ROOM_MANAGER:
+				RoomManager::Instance().Flush();
+				break;
+
+			case GlobalQueueType::ROOM:
+				RoomManager::Instance().GetRoom(qType.second)->Flush();
 				break;
 			}
 		}

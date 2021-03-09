@@ -6,6 +6,7 @@ enum SC_PACKET
 	SC_CONNECT_OK,				///< 연결 성공
 	SC_LOGIN_OK,				///< 로그인 성공
 	SC_LOGIN_FAIL,				///< 로그인 실패
+	SC_CHANGE_QUEUE,			///< 매치 진입상태 변경
 	SC_SPAWN_CHARACTER,			///< 캐릭터 오브젝트 추가
 	SC_DESTROY_CHARACTER,		///< 캐릭터 오브젝트 삭제
 	SC_GET_ITEM,				///< 캐릭터 아이템 획득
@@ -19,7 +20,13 @@ enum SC_PACKET
 //Client -> Server.
 enum CS_PACKET
 {
+	//To UserManager
 	CS_REQEUST_LOGIN,			///< 로그인 요청
+	CS_ENQUEUE,					///< 매치큐 등록 요청
+	CS_DEQUEUE,					///< 매치큐 등록해제 요청
+
+	//To Room
+	CS_UPDATE,					///< 방 업데이트 요청
 	CS_KEYUP,					///< 키입력(띔)
 	CS_KEYDOWN,					///< 키입력(눌림)
 	CS_COUNT
@@ -27,7 +34,7 @@ enum CS_PACKET
 
 using PACKET_TYPE = unsigned char;
 using PACKET_SIZE = unsigned short;
-constexpr int NAME_LENGTH = 20;
+constexpr size_t NAME_LENGTH = 20;
 
 #pragma pack(1)
 class DEFAULT_PACKET
@@ -65,6 +72,17 @@ public:
 		size = sizeof(SC_PACKET_LOGIN_FAIL);
 		type = SC_LOGIN_FAIL;
 	};
+};
+
+class SC_PACKET_CHANGE_QUEUE : public DEFAULT_PACKET
+{
+public:
+	SC_PACKET_CHANGE_QUEUE(bool isEnq) : enque(isEnq)
+	{
+		size = sizeof(SC_PACKET_CHANGE_QUEUE);
+		type = SC_CHANGE_QUEUE;
+	};
+	bool enque{ false };
 };
 
 class SC_PACKET_SPAWN_CHARACTER : public DEFAULT_PACKET
@@ -192,6 +210,26 @@ public:
 		type = CS_KEYDOWN;
 	};
 	char key;
+};
+
+class CS_PACKET_ENQUEUE : public DEFAULT_PACKET
+{
+public:
+	CS_PACKET_ENQUEUE()
+	{
+		size = sizeof(CS_PACKET_ENQUEUE);
+		type = CS_ENQUEUE;
+	};
+};
+
+class CS_PACKET_DEQUEUE : public DEFAULT_PACKET
+{
+public:
+	CS_PACKET_DEQUEUE()
+	{
+		size = sizeof(CS_PACKET_DEQUEUE);
+		type = CS_DEQUEUE;
+	};
 };
 
 #pragma pack()

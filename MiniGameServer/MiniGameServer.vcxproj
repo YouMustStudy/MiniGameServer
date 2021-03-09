@@ -149,6 +149,7 @@
     <ClCompile Include="MatchQueue.cpp" />
     <ClCompile Include="MiniGameServer.cpp" />
     <ClCompile Include="protocol.h" />
+    <ClCompile Include="RoomManager.cpp" />
     <ClCompile Include="Rooms\DMRoom.cpp" />
     <ClCompile Include="UserManager.cpp" />
     <ClCompile Include="Utills\Logger.cpp" />
@@ -163,6 +164,7 @@
     <ClInclude Include="LockFreeQueue.h" />
     <ClInclude Include="MatchQueue.h" />
     <ClInclude Include="MiniGameServer.h" />
+    <ClInclude Include="RoomManager.h" />
     <ClInclude Include="Rooms\DMRoom.h" />
     <ClInclude Include="UserManager.h" />
     <ClInclude Include="Utills\Logger.h" />

@@ -1,5 +1,7 @@
 #include "UserManager.h"
+#include "RoomManager.h"
 #include "MiniGameServer.h"
+
 
 UserManager& UserManager::Instance()
 {
@@ -23,17 +25,23 @@ void UserManager::ProcessJob(Job job)
 		ProcessLogin(reinterpret_cast<LoginInfo*>(job.second));
 		break;
 
-	case USER_ENTER_QUEUE:
+	case USER_ENQUEUE:
+		ProcessEnqueue(reinterpret_cast<size_t>(job.second));
 		break;
 
-	case USER_EXIT_QUEUE:
+	case USER_DEQUEUE:
+		ProcessDequeue(reinterpret_cast<size_t>(job.second));
+		break;
+
+	default:
+		Logger::Log("처리되지 않은 유저 매니저 잡 발견");
 		break;
 	}
 }
 
 UserManager::UserManager()
 {
-	queueType = static_cast<size_t>(GlobalQueueType::USER_MANAGER);
+	queueType = { static_cast<size_t>(GlobalQueueType::USER_MANAGER), 0 };
 	//인덱스 풀 초기화.
 	for (size_t idx = 1; MAX_USER_SIZE >= idx ; ++idx)
 		indexPool.push(MAX_USER_SIZE - idx);
@@ -43,14 +51,15 @@ void UserManager::ProcessAccept(AcceptInfo* info)
 {
 	if (nullptr == info)
 	{
-		Logger::Log("잘못된 ACCEPT 시도 발생");
+		Logger::Log("잘못된 ACCEPT - NULL 시도 발생");
 		return;
 	}
 
 	if (true == indexPool.empty())
 	{
-		//할당할 수 있는 유저가 없다.
+		//할당할 수 있는 유저가 없다. -> 받지말자.
 		Logger::Log("할당할 수 있는 유저가 없음");
+		closesocket(info->socket);
 		return;
 	}
 
@@ -77,7 +86,8 @@ void UserManager::ProcessAccept(AcceptInfo* info)
 
 void UserManager::ProcessDisconnect(size_t idx)
 {
-	//룸 퇴장.
+	//룸 퇴장 추가
+
 	closesocket(userList[idx].socket);
 	userList[idx].socket = INVALID_SOCKET;
 
@@ -115,4 +125,32 @@ void UserManager::ProcessLogin(LoginInfo* info)
 	MiniGameServer::Instance().SendPacket(&userList[reqUser], &packet);
 
 	delete info;
+}
+
+void UserManager::ProcessEnqueue(size_t idx)
+{
+	//유저 상태체크 넣어야함
+	matchQueue.Enqueue(idx);
+	SC_PACKET_CHANGE_QUEUE packet{ true };
+	MiniGameServer::Instance().SendPacket(&userList[idx], &packet);
+
+	if (true == matchQueue.CanMakeMake())
+	{
+		std::vector<size_t> matchUsers;
+		if (false == matchQueue.MatchMake(matchUsers)) return;
+
+		//룸매니저에게 통보.
+		std::vector<Client*> matchUserPtrs;
+		for (auto userIdx : matchUsers)
+			matchUserPtrs.emplace_back(&userList[userIdx]);
+		RoomManager::Instance().PushJob(RMGR_CREATE, new CreateRoomInfo(matchUserPtrs));
+	}
+}
+
+void UserManager::ProcessDequeue(size_t idx)
+{
+	//유저 상태체크 넣어야함
+	matchQueue.Dequeue(idx);
+	SC_PACKET_CHANGE_QUEUE packet{ false };
+	MiniGameServer::Instance().SendPacket(&userList[idx], &packet);
 }

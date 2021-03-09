@@ -1,5 +1,6 @@
 ﻿#include "MiniGameServer.h"
 #include "UserManager.h"
+#include "RoomManager.h"
 
 using namespace std;
 using namespace chrono;
@@ -61,7 +62,6 @@ void MiniGameServer::InitThreads()
 void MiniGameServer::InitRooms()
 {
 	Logger::Log("Initializing Rooms...");
-	m_room.Init();
 }
 
 void MiniGameServer::LoadConfig()
@@ -118,8 +118,9 @@ void MiniGameServer::WorkerThread()
 
 		case EV_UPDATE:
 		{
-			m_room.Update();
-			AddEvent(key, EV_UPDATE, UPDATE_INTERVAL);
+			auto roomPtr = RoomManager::Instance().GetRoom(key);
+			if (nullptr != roomPtr)
+				roomPtr->PushJob(CS_UPDATE, nullptr);
 			delete overEx;
 			break;
 		}
@@ -144,8 +145,7 @@ void MiniGameServer::ProcessPacket(size_t idx, void* buffer)
 	switch (dp->type)
 	{
 	case CS_REQEUST_LOGIN:
-		UserManager::Instance().PushJob(USER_LOGIN,
-			new LoginInfo{idx});
+		UserManager::Instance().PushJob(USER_LOGIN,	new LoginInfo{idx});
 		break;
 
 	case CS_KEYUP:
@@ -193,6 +193,11 @@ void MiniGameServer::AddTimer(Event& ev)
 void MiniGameServer::AddEvent(size_t client, int et, size_t milisec_delay)
 {
 	Event ev{ client, et, high_resolution_clock::now() + chrono::milliseconds(milisec_delay) };
+	AddTimer(ev);
+}
+void MiniGameServer::AddEvent(size_t client, int et, high_resolution_clock::time_point timePoint)
+{
+	Event ev{ client, et, timePoint };
 	AddTimer(ev);
 }
 void MiniGameServer::ParsePacket(size_t idx, Client* client, void* buffer, size_t recvLength)

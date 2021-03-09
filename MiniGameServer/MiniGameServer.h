@@ -2,13 +2,9 @@
 #include <WS2tcpip.h>
 #include <vector>
 #include <thread>
-#include <mutex>
 #include <atomic>
-#include <list>
-#include <map>
 #include <chrono>
 #include <queue>
-#include <iostream>
 
 #include ".\Common\CSOCKADDR_IN.h"
 #include ".\Common\Event.h"
@@ -31,15 +27,12 @@ constexpr auto RECV_BUF_SIZE = 512;
 class MiniGameServer
 {
 private:
-	size_t UPDATE_INTERVAL{ 20 };		///< Interval of updateing time. Millisecond.
-	size_t NUM_THREADS{ 6 };
+	size_t NUM_THREADS{ 10 };
 	short SERVER_PORT{ 15600 };
 
 	std::atomic<int> m_playerNum;		///< 총 접속 인원 수
 	HANDLE m_iocp;						///< 작업 스레드용 IOCP 핸들
 	SOCKET m_listenSocket;				///< 리슨 소켓
-
-	DMRoom m_room;							///< 게임이 실행되는 단위
 
 	//타이머
 	std::priority_queue<Event> m_timerQueue;	///< 타이머 큐
@@ -71,14 +64,6 @@ private:
 	@param[in] ev 추가할 이벤트
 	*/
 	void AddTimer(Event& ev);
-
-	/**
-	@brief 타이머 이벤트를 추가한다.
-	@param[in] client 이벤트의 대상
-	@param[in] et 이벤트 종류
-	@param[in] delay_time 이벤트 실행까지의 딜레이
-	*/
-	void AddEvent(size_t client, int et, size_t delay_time);
 
 	/**
 	@brief 도착한 패킷을 재조립한다.
@@ -118,6 +103,22 @@ public:
 	@param[in] buff 전송할 데이터
 	*/
 	void SendPacket(Client* client, void* buff);
+
+	/**
+	@brief 타이머 이벤트를 추가한다.
+	@param[in] client 이벤트의 대상
+	@param[in] et 이벤트 종류
+	@param[in] delay_time 이벤트 실행까지의 딜레이
+	*/
+	void AddEvent(size_t client, int et, size_t delay_time);
+
+	/**
+	@brief 타이머 이벤트를 추가한다.
+	@param[in] client 이벤트의 대상
+	@param[in] et 이벤트 종류
+	@param[in] timePoint 이벤트 실행 시점
+	*/
+	void AddEvent(size_t client, int et, std::chrono::high_resolution_clock::time_point timePoint);
 
 	/**
 	@brief 서버를 시작함.

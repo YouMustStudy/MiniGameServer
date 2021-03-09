@@ -2,18 +2,17 @@
 #include <array>
 #include <stack>
 #include <unordered_set>
-#include <WS2tcpip.h>
 #include "Common/Client.h"
 #include "LockFreeQueue.h"
-
+#include "MatchQueue.h"
 
 enum UserJobType
 {
 	USER_ACCEPT,
 	USER_DISCONN,
 	USER_LOGIN,
-	USER_ENTER_QUEUE,
-	USER_EXIT_QUEUE
+	USER_ENQUEUE,
+	USER_DEQUEUE
 };
 
 struct AcceptInfo
@@ -45,11 +44,14 @@ private:
 	void ProcessAccept(AcceptInfo* info);
 	void ProcessDisconnect(size_t idx);
 	void ProcessLogin(LoginInfo* info);
+	void ProcessEnqueue(size_t idx);
+	void ProcessDequeue(size_t idx);
 
 	static constexpr size_t MAX_USER_SIZE = 1000;
 	std::array<Client, MAX_USER_SIZE> userList{};
 	std::unordered_set<std::wstring> userIDSet{};
-	size_t curUserCnt{0};
 	std::stack<size_t> indexPool;
 	HANDLE workerIOCP{INVALID_HANDLE_VALUE};
+
+	MatchQueue matchQueue;
 };
