@@ -38,6 +38,8 @@ public:
 	void Regist(std::vector<User*> users);	//Not Thread-Safe, RoomManager에서만 호출할 것.
 	bool IsEnd() { return isEnd; };
 
+	std::vector<Character*> characterList{};
+	std::vector<User*> userList{};
 
 protected:
 	virtual void ProcessJob(Job job) override;
@@ -70,7 +72,4 @@ private:
 	void UpdatePos(Character& character);
 	void UpdateCollider();
 	bool CheckCollider(Collider& a, Collider& b);
-	
-	std::vector<Character> characterList;
-	std::vector<User*> userList;
 };

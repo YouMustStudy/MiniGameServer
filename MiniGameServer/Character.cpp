@@ -15,7 +15,7 @@ void Character::Update(float fTime)
 	switch (_playerInfo.curState)
 	{
 	case EState::ATTACK_READY:
-		if (ATK_READY_TIME >= _playerInfo.animTime)
+		if (ATK_READY_TIME <= _playerInfo.animTime)
 		{
 			_playerInfo.curState = EState::ATTACK;
 			_playerInfo.animTime -= ATK_READY_TIME;
@@ -24,7 +24,7 @@ void Character::Update(float fTime)
 		break;
 
 	case EState::ATTACK:
-		if (ATK_TIME >= _playerInfo.animTime)
+		if (ATK_TIME <= _playerInfo.animTime)
 		{
 			_playerInfo.curState = EState::IDLE;
 			_playerInfo.animTime -= ATK_TIME;

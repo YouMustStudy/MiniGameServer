@@ -168,7 +168,7 @@ void MiniGameServer::ProcessPacket(User* user, size_t idx, void* buffer)
 		if (nullptr != user->roomPtr)
 		{
 			auto packet = reinterpret_cast<CS_PACKET_MOVEDIR*>(buffer);
-			user->roomPtr->PushJob(CS_ATTACK, reinterpret_cast<void*>(
+			user->roomPtr->PushJob(CS_MOVEDIR, reinterpret_cast<void*>(
 				new MoveDirInfo(packet->uid, packet->dx, packet->dy)
 				));
 		}

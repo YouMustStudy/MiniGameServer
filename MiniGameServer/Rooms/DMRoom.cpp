@@ -1,8 +1,6 @@
 #include "DMRoom.h"
 #include "..\Common\User.h"
 #include "..\Utills\Logger.h"
-
-
 #include "..\RoomManager.h"
 #include "..\UserManager.h"
 #include "..\MiniGameServer.h"
@@ -20,6 +18,7 @@ void DMRoom::Init()
 {
 	lastUpdateTime = std::chrono::high_resolution_clock::now();
 	characterList.clear();
+	userList.clear();
 	eventData.Clear();
 	infoData.Clear();
 }
@@ -32,8 +31,9 @@ void DMRoom::Regist(std::vector<User*> users)
 		if (nullptr != users[i])
 		{
 			users[i]->roomPtr = this;
-			characterList.emplace_back();
-			characterList.back().id = i;
+			userList.emplace_back(users[i]);
+			characterList.emplace_back(new Character);
+			characterList.back()->id = i;
 
 			SC_PACKET_SPAWN_CHARACTER spawnCharacterPacket { i, 0, 0, 0 };
 			eventData.EmplaceBack(&spawnCharacterPacket, spawnCharacterPacket.size);
@@ -60,10 +60,12 @@ void DMRoom::ProcessJob(Job job)
 		break;
 
 	case CS_ATTACK:
+		Logger::Log("유저 공격 수신" + std::to_string(reinterpret_cast<UID>(job.second)));
 		ProcessAttack(reinterpret_cast<UID>(job.second));
 		break;
 
 	case CS_MOVEDIR:
+		//Logger::Log("유저 디렉션 수신");
 		ProcessMoveDir(reinterpret_cast<MoveDirInfo*>(job.second));
 		break;
 
@@ -96,7 +98,7 @@ void DMRoom::Update()
 
 	isEnd = GameLogic();
 	SendGameState();
-	Logger::Log("방 업데이트 수행 - " + std::to_string(deltaTime) + "ms");
+	//Logger::Log("방 업데이트 수행 - " + std::to_string(deltaTime) + "ms");
 	if (true == isEnd)
 	{
 		End();
@@ -111,10 +113,10 @@ void DMRoom::Update()
 
 void DMRoom::ProcessAttack(UID uid)
 {
-	if (EState::IDLE == characterList[uid]._playerInfo.curState
-		|| EState::MOVE == characterList[uid]._playerInfo.curState)
+	if (EState::IDLE == characterList[uid]->_playerInfo.curState
+		|| EState::MOVE == characterList[uid]->_playerInfo.curState)
 	{
-		characterList[uid]._playerInfo.curState = EState::ATTACK_READY;
+		characterList[uid]->_playerInfo.curState = EState::ATTACK_READY;
 		SC_PACKET_ATTACK atkPacket{ uid };
 		eventData.EmplaceBack(&atkPacket, atkPacket.size);
 	}
@@ -123,8 +125,8 @@ void DMRoom::ProcessAttack(UID uid)
 void DMRoom::ProcessMoveDir(MoveDirInfo* info)
 {
 	if (nullptr == info) return;
-	characterList[info->uid]._playerInfo.dir.x = info->x;
-	characterList[info->uid]._playerInfo.dir.y = info->y;
+	characterList[info->uid]->_playerInfo.dir.x = info->x;
+	characterList[info->uid]->_playerInfo.dir.y = info->y;
 	delete info;
 }
 
@@ -132,10 +134,11 @@ void DMRoom::UpdatePosition()
 {
 	for (auto& character : characterList)
 	{
-		if (true == character.GetHitCollider()._bAttacked)
-			KnockBack(character);
+		character->Update(deltaTime);
+		if (true == character->GetHitCollider()._bAttacked)
+			KnockBack(*character);
 		else
-			UpdatePos(character);
+			UpdatePos(*character);
 	}
 }
 
@@ -165,22 +168,22 @@ void DMRoom::UpdateCollider()
 	// 공격 당함 체크 
 	for (auto& chA : characterList) // 공격하는 플레이어
 	{
-		if (chA.GetAttackCollider()._enabled == false) continue; // 어택콜라이더 활성화 X -> return
+		if (chA->GetAttackCollider()._enabled == false) continue; // 어택콜라이더 활성화 X -> return
 		for (auto& chB : characterList)	// 맞는 플레이어
 		{
 			if (chA == chB) continue;	// 내 자신은 공격 못한다.
-			if (CheckCollider(chA.GetAttackCollider(), chB.GetHitCollider())) // AttackColl, HitColl 충돌 체크
+			if (CheckCollider(chA->GetAttackCollider(), chB->GetHitCollider())) // AttackColl, HitColl 충돌 체크
 			{
 				/* 피격체가 밀려나갈 방향 구하기 */
-				Vector3d disVec = chB._playerInfo.pos - chA._playerInfo.pos;
+				Vector3d disVec = chB->_playerInfo.pos - chA->_playerInfo.pos;
 				disVec = disVec.normalize();
 
 				/* 피격체의 콜라이더를 피격당한상태로 바꾸고, 밀려날 위치를 부여한다. */
-				chB.GetHitCollider()._bAttacked = true;
-				chB.GetHitCollider()._attackedPos = Vector3d(
-					chB._playerInfo.pos.x + (chA.GetAttackCollider()._knockBackPower * disVec.x),
-					chB._playerInfo.pos.y + (chA.GetAttackCollider()._knockBackPower * disVec.x),
-					chB._playerInfo.pos.z
+				chB->GetHitCollider()._bAttacked = true;
+				chB->GetHitCollider()._attackedPos = Vector3d(
+					chB->_playerInfo.pos.x + (chA->GetAttackCollider()._knockBackPower * disVec.x),
+					chB->_playerInfo.pos.y + (chA->GetAttackCollider()._knockBackPower * disVec.x),
+					chB->_playerInfo.pos.z
 				);
 			}
 		}
@@ -212,8 +215,8 @@ void DMRoom::SendGameState()
 	for (size_t i = 0; i < userList.size(); ++i)
 	{
 		SC_PACKET_CHARACTER_INFO infoPacket{i, 
-			characterList[i]._playerInfo.pos.x, characterList[i]._playerInfo.pos.y, 
-			characterList[i]._playerInfo.dir.x, characterList[i]._playerInfo.dir.y};
+			characterList[i]->_playerInfo.pos.x, characterList[i]->_playerInfo.pos.y,
+			characterList[i]->_playerInfo.dir.x, characterList[i]->_playerInfo.dir.y};
 		infoData.EmplaceBack(&infoPacket, infoPacket.size);
 	}
 	

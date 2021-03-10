@@ -9,7 +9,7 @@ class PacketVector {
 	static int DEFAULT_BUFFER_SIZE;
 
 public:
-	char* data;
+	char* data{nullptr} ;
 	size_t len;
 	size_t maxLen;
 	PacketVector();

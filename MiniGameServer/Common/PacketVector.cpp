@@ -3,8 +3,8 @@
 
 int PacketVector::DEFAULT_BUFFER_SIZE = 256;
 
-PacketVector::PacketVector() : data(new char[DEFAULT_BUFFER_SIZE]), len(0), maxLen(DEFAULT_BUFFER_SIZE) { }
-PacketVector::PacketVector(int size) : data(new char[size]), len(0), maxLen(size) { }
+PacketVector::PacketVector() : data(new char[DEFAULT_BUFFER_SIZE] {}), len(0), maxLen(DEFAULT_BUFFER_SIZE) { }
+PacketVector::PacketVector(int size) : data(new char[size] {}), len(0), maxLen(size) { }
 PacketVector::~PacketVector() { delete[] data; data = nullptr; len = 0; maxLen = 0; };
 
 void PacketVector::EmplaceBack(void* src, size_t srcLen)

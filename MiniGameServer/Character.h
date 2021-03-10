@@ -28,18 +28,18 @@ enum class ESpriteType : unsigned char {
 
 // 플레이어 정보
 struct FPlayerInfo {
-		int id;							// 네트워크 id
-		Vector3d pos;					//x좌표
-		Vector3d dir;					//방향
-		float hp;						//체력
-		float hpm;						//최대체력
-		float attackPower;				//공격력
-		float moveSpeed{10.0f};			//이동속도
-		bool bFlipX;					//true 왼쪽 바라보는상태
-		ESpriteType	sprite;				//sprite 종류
-		EState		curState;			//현재 상태
+	int id{};							// 네트워크 id
+		Vector3d pos{};					//x좌표
+		Vector3d dir{};					//방향
+		float hp{};						//체력
+		float hpm{};						//최대체력
+		float attackPower{};				//공격력
+		float moveSpeed{1000.0f};			//이동속도
+		bool bFlipX{};					//true 왼쪽 바라보는상태
+		ESpriteType	sprite{};				//sprite 종류
+		EState		curState{};			//현재 상태
 		float animTime{0.0f};
-		EWeaponType 	curWeapon;		// 현재 무기
+		EWeaponType 	curWeapon{};		// 현재 무기
 };
 
 // 콜라이더. 캐릭터는 attack(공격전용), hit(피격전용) 두 종류를 가지고 있다.
@@ -101,10 +101,10 @@ public:
 	};
 
 public:
-	size_t id{};
 	FPlayerInfo _playerInfo;	// 플레이어 정보
 	Collider _hitColl;			// 피격 콜라이더
 	Collider _attackColl;		// 공격 콜라이더
+	size_t id{};
 
 	bool operator==(const Character& other) { return id == other.id; };
 	void Update(float fTime);
