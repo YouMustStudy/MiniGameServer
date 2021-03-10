@@ -1,5 +1,5 @@
 #include "DMRoom.h"
-#include "..\Common\Client.h"
+#include "..\Common\User.h"
 #include "..\Utills\Logger.h"
 #include "..\protocol.h"
 #include "..\RoomManager.h"
@@ -18,7 +18,7 @@ void DMRoom::Init()
 	lastUpdateTime = std::chrono::high_resolution_clock::now();
 }
 
-void DMRoom::Regist(std::vector<Client*> clients)
+void DMRoom::Regist(std::vector<User*> clients)
 {
 	//유저 등록 처리
 	return;
@@ -52,14 +52,20 @@ void DMRoom::End()
 void DMRoom::Update()
 {
 	currentUpdateTime = std::chrono::high_resolution_clock::now();
-	delta_time = std::chrono::duration<float>(currentUpdateTime - lastUpdateTime).count();
+	deltaTime = std::chrono::duration<float>(currentUpdateTime - lastUpdateTime).count();
 	
     isEnd = GameLogic();
 	SendGameState();
+	Logger::Log("방 업데이트 수행 - " + std::to_string(deltaTime) + "ms");
 	if (true == isEnd)
+	{
 		End();
+		Logger::Log("매치 종료, 룸 매니저에 삭제 요청");
+	}
 	else
+	{
 		MiniGameServer::Instance().AddEvent(queueType.second, EV_UPDATE, lastUpdateTime + std::chrono::milliseconds(UPDATE_INTERVAL));
+	}
 	lastUpdateTime = currentUpdateTime;
 }
 
@@ -70,7 +76,10 @@ void DMRoom::SetQueueType(QueueType queType)
 
 bool DMRoom::GameLogic()
 {
-	return true;
+	left_time -= deltaTime;
+	if (0 >= left_time)
+		return true;
+	return false;
 }
 
 void DMRoom::SendGameState()

@@ -8,7 +8,7 @@
 #include "..\Common\PacketVector.h"
 #include "..\LockFreeQueue.h"
 
-class Client;
+class User;
 /**
 룸
 실제 게임이 이뤄지는 객체
@@ -23,7 +23,7 @@ public:
 	void SetQueueType(QueueType queType);
 
 	void Init();								//Not Thread-Safe, RoomManager에서만 호출할 것.
-	void Regist(std::vector<Client*> clients);	//Not Thread-Safe, RoomManager에서만 호출할 것.
+	void Regist(std::vector<User*> clients);	//Not Thread-Safe, RoomManager에서만 호출할 것.
 	bool IsEnd() { return isEnd; };
 
 
@@ -40,8 +40,8 @@ private:
 	PacketVector infoData;  //전송될 위치정보 패킷
 	bool isEnd{false};
 
-	float delta_time{};
-	float left_time{};
+	float deltaTime{};
+	float left_time{1.0f};
 
 	bool GameLogic();
 	void SendGameState();

@@ -64,11 +64,14 @@ void RoomManager::ProcessCreateRoom(CreateRoomInfo* info)
 	roomList[roomIdx].Regist(info->users);
 
 	MiniGameServer::Instance().AddEvent(roomIdx, EV_UPDATE, std::chrono::high_resolution_clock::now());
+	Logger::Log("룸 매니저에서 방 생성 완료");
 	delete info;
 }
 
 void RoomManager::ProcessDestroyRoom(size_t idx)
 {
-	if (true == roomList[idx].IsEnd())
-		indexPool.push(idx);
+	if (false == roomList[idx].IsEnd()) return;
+
+	indexPool.push(idx);
+	Logger::Log("룸 매니저에서 방 삭제 완료");
 }

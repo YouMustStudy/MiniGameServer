@@ -41,6 +41,7 @@ void UserManager::ProcessJob(Job job)
 
 UserManager::UserManager()
 {
+	userIDSet.clear();
 	queueType = { static_cast<size_t>(GlobalQueueType::USER_MANAGER), 0 };
 	//인덱스 풀 초기화.
 	for (size_t idx = 1; MAX_USER_SIZE >= idx ; ++idx)
@@ -90,6 +91,7 @@ void UserManager::ProcessDisconnect(size_t idx)
 
 	closesocket(userList[idx].socket);
 	userList[idx].socket = INVALID_SOCKET;
+	userIDSet.erase(userList[idx].id);
 
 	char nameBuf[INET_ADDRSTRLEN]{ 0, };
 	inet_ntop(AF_INET, &userList[idx].addr.sin_addr, nameBuf, INET_ADDRSTRLEN);
@@ -112,7 +114,8 @@ void UserManager::ProcessLogin(LoginInfo* info)
 	//중복 로그인 체크
 	if (0 != userIDSet.count(info->id))
 	{
-		SC_PACKET_LOGIN_FAIL packet;
+		Logger::Log("중복 로그인 시도");
+		SC_PACKET_LOGIN_FAIL packet(LOGIN_FAIL_SAME_ID);
 		MiniGameServer::Instance().SendPacket(&userList[reqUser], &packet);
 		return;
 	}
@@ -120,6 +123,7 @@ void UserManager::ProcessLogin(LoginInfo* info)
 	//로그인 OK!!
 	userList[reqUser].id = info->id;
 	userIDSet.emplace(info->id);
+	Logger::Log("유저 로그인 성공");
 
 	SC_PACKET_LOGIN_OK packet;
 	MiniGameServer::Instance().SendPacket(&userList[reqUser], &packet);
@@ -133,6 +137,7 @@ void UserManager::ProcessEnqueue(size_t idx)
 	matchQueue.Enqueue(idx);
 	SC_PACKET_CHANGE_QUEUE packet{ true };
 	MiniGameServer::Instance().SendPacket(&userList[idx], &packet);
+	Logger::Log("매치큐 등록");
 
 	if (true == matchQueue.CanMakeMake())
 	{
@@ -140,10 +145,11 @@ void UserManager::ProcessEnqueue(size_t idx)
 		if (false == matchQueue.MatchMake(matchUsers)) return;
 
 		//룸매니저에게 통보.
-		std::vector<Client*> matchUserPtrs;
+		std::vector<User*> matchUserPtrs;
 		for (auto userIdx : matchUsers)
 			matchUserPtrs.emplace_back(&userList[userIdx]);
 		RoomManager::Instance().PushJob(RMGR_CREATE, new CreateRoomInfo(matchUserPtrs));
+		Logger::Log("인원수 충족, 룸 매니저에 방 생성 요청");
 	}
 }
 
@@ -153,4 +159,5 @@ void UserManager::ProcessDequeue(size_t idx)
 	matchQueue.Dequeue(idx);
 	SC_PACKET_CHANGE_QUEUE packet{ false };
 	MiniGameServer::Instance().SendPacket(&userList[idx], &packet);
+	Logger::Log("매치큐 등록 해제");
 }

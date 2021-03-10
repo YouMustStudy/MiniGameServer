@@ -1,7 +1,7 @@
-#include "CLIENT.h"
+#include "User.h"
 #include "..\Utills\Logger.h"
 
-void Client::SetRecv()
+void User::SetRecv()
 {
 	recvOver.Reset();
 	DWORD flag = 0;

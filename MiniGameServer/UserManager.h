@@ -2,7 +2,7 @@
 #include <array>
 #include <stack>
 #include <unordered_set>
-#include "Common/Client.h"
+#include "Common/User.h"
 #include "LockFreeQueue.h"
 #include "MatchQueue.h"
 
@@ -23,9 +23,9 @@ struct AcceptInfo
 
 struct LoginInfo
 {
+	LoginInfo(size_t idx, const wchar_t* id) : idx(idx), id(id) {};
 	size_t idx;
-	wchar_t id[20];
-	wchar_t pwd[20];
+	std::wstring id;
 };
 
 class UserManager : public LockFreeQueue
@@ -48,8 +48,8 @@ private:
 	void ProcessDequeue(size_t idx);
 
 	static constexpr size_t MAX_USER_SIZE = 1000;
-	std::array<Client, MAX_USER_SIZE> userList{};
-	std::unordered_set<std::wstring> userIDSet{};
+	std::array<User, MAX_USER_SIZE> userList;
+	std::unordered_set<std::wstring> userIDSet;
 	std::stack<size_t> indexPool;
 	HANDLE workerIOCP{INVALID_HANDLE_VALUE};
 

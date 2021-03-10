@@ -10,7 +10,7 @@
 @brief Client class for battle server.
 @author Gurnwoo Kim
 */
-class Client
+class User
 {
 public:
 	OverEx recvOver{}; ///< OVERRAPPED Wrapping class for IOCP.
@@ -22,11 +22,10 @@ public:
 	std::wstring id;
 	
 	PacketVector savedPacket{ BUFFER_SIZE };	 ///< packet buffer.
-	size_t savedSize{ 0 };						 ///< packet buffer data.
 	size_t needSize{ sizeof(PACKET_SIZE) };	 ///< packet buffer data.
 
-	Client() {};
-	~Client() {};
+	User() {};
+	~User() {};
 
 	/**
 	@brief set recv on iocp env.

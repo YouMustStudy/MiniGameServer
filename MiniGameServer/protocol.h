@@ -6,7 +6,9 @@ enum SC_PACKET
 	SC_CONNECT_OK,				///< 연결 성공
 	SC_LOGIN_OK,				///< 로그인 성공
 	SC_LOGIN_FAIL,				///< 로그인 실패
-	SC_CHANGE_QUEUE,			///< 매치 진입상태 변경
+	SC_CHANGE_QUEUE,			///< 매치큐 대기상태 변경
+	SC_CHANGE_SCENE,			///< 게임시작, 종료를 알림
+	SC_UID,						///< 유저에게 게임 UID 전송
 	SC_SPAWN_CHARACTER,			///< 캐릭터 오브젝트 추가
 	SC_DESTROY_CHARACTER,		///< 캐릭터 오브젝트 삭제
 	SC_GET_ITEM,				///< 캐릭터 아이템 획득
@@ -21,19 +23,21 @@ enum SC_PACKET
 enum CS_PACKET
 {
 	//To UserManager
-	CS_REQEUST_LOGIN,			///< 로그인 요청
+	CS_REQUEST_LOGIN,			///< 로그인 요청
 	CS_ENQUEUE,					///< 매치큐 등록 요청
 	CS_DEQUEUE,					///< 매치큐 등록해제 요청
 
 	//To Room
 	CS_UPDATE,					///< 방 업데이트 요청
-	CS_KEYUP,					///< 키입력(띔)
-	CS_KEYDOWN,					///< 키입력(눌림)
+	CS_ATTACK,					///< 유저 공격요청
+	CS_MOVEDIR,					///< 유저 움직임 요청
 	CS_COUNT
 };
 
 using PACKET_TYPE = unsigned char;
 using PACKET_SIZE = unsigned short;
+using UID = size_t;
+using SCENETYPE = unsigned char;
 constexpr size_t NAME_LENGTH = 20;
 
 #pragma pack(1)
@@ -64,14 +68,21 @@ public:
 	};
 };
 
+using LOGIN_FAIL_REASON = unsigned char;
+enum LOGIN_FAIL_REASON_ENUM
+{
+	LOGIN_FAIL_SAME_ID,
+};
+
 class SC_PACKET_LOGIN_FAIL : public DEFAULT_PACKET
 {
 public:
-	SC_PACKET_LOGIN_FAIL()
+	SC_PACKET_LOGIN_FAIL(LOGIN_FAIL_REASON reason) : reason(reason)
 	{
 		size = sizeof(SC_PACKET_LOGIN_FAIL);
 		type = SC_LOGIN_FAIL;
 	};
+	LOGIN_FAIL_REASON reason;
 };
 
 class SC_PACKET_CHANGE_QUEUE : public DEFAULT_PACKET
@@ -85,6 +96,28 @@ public:
 	bool enque{ false };
 };
 
+class SC_PACKET_CHANGE_SCENE : public DEFAULT_PACKET
+{
+public:
+	SC_PACKET_CHANGE_SCENE(SCENETYPE sceneType) : scene(sceneType)
+	{
+		size = sizeof(SC_PACKET_CHANGE_SCENE);
+		type = SC_CHANGE_SCENE;
+	};
+	SCENETYPE scene;
+};
+
+class SC_PACKET_UID : public DEFAULT_PACKET
+{
+public:
+	SC_PACKET_UID(UID uid) : uid(uid)
+	{
+		size = sizeof(SC_PACKET_UID);
+		type = SC_UID;
+	};
+	UID uid;
+};
+
 class SC_PACKET_SPAWN_CHARACTER : public DEFAULT_PACKET
 {
 public:
@@ -95,7 +128,7 @@ public:
 		pos[0] = x;
 		pos[1] = y;
 	};
-	int uid{};
+	UID uid{};
 	int characterType{};
 	wchar_t name[NAME_LENGTH + 1]{};
 	float pos[2]{};
@@ -109,42 +142,42 @@ public:
 		size = sizeof(SC_PACKET_DESTROY_CHARACTER);
 		type = SC_DESTROY_CHARACTER;
 	};
-	int uid{};
+	UID uid{};
 };
 
 class SC_PACKET_GET_ITEM : public DEFAULT_PACKET
 {
 public:
-	SC_PACKET_GET_ITEM(int uid, int item) : uid(uid), item(item)
+	SC_PACKET_GET_ITEM(UID uid, int item) : uid(uid), item(item)
 	{
 		size = sizeof(SC_PACKET_GET_ITEM);
 		type = SC_GET_ITEM;
 	};
-	int uid{};
+	UID uid{};
 	int item{};
 };
 
 class SC_PACKET_CHANGE_HP : public DEFAULT_PACKET
 {
 public:
-	SC_PACKET_CHANGE_HP(int uid, int hp) : uid(uid), hp(hp)
+	SC_PACKET_CHANGE_HP(UID uid, int hp) : uid(uid), hp(hp)
 	{
 		size = sizeof(SC_PACKET_CHANGE_HP);
 		type = SC_CHANGE_HP;
 	};
-	int uid{};
+	UID uid{};
 	int hp{};
 };
 
 class SC_PACKET_CHANGE_SCORE : public DEFAULT_PACKET
 {
 public:
-	SC_PACKET_CHANGE_SCORE(int uid, int curKill, int totalKill) : uid(uid), curKill(curKill), totalKill(totalKill)
+	SC_PACKET_CHANGE_SCORE(UID uid, int curKill, int totalKill) : uid(uid), curKill(curKill), totalKill(totalKill)
 	{
 		size = sizeof(SC_PACKET_CHANGE_SCORE);
 		type = SC_CHANGE_SCORE;
 	};
-	int uid{};
+	UID uid{};
 	int curKill{};
 	int totalKill{};
 };
@@ -152,7 +185,7 @@ public:
 class SC_PACKET_CHARACTER_INFO : public DEFAULT_PACKET
 {
 public:
-	SC_PACKET_CHARACTER_INFO(int uid, float x, float y, float dx, float dy) : uid(uid)
+	SC_PACKET_CHARACTER_INFO(UID uid, float x, float y, float dx, float dy) : uid(uid)
 	{
 		size = sizeof(SC_PACKET_CHARACTER_INFO);
 		type = SC_CHARACTER_INFO;
@@ -161,7 +194,7 @@ public:
 		dir[0] = dx;
 		dir[1] = dy;
 	};
-	int uid{};
+	UID uid{};
 	float pos[2]{};
 	float dir[2]{};
 	char animIndex{0};
@@ -170,46 +203,48 @@ public:
 class SC_PACKET_SPAWN_EFFECT : public DEFAULT_PACKET
 {
 public:
-	SC_PACKET_SPAWN_EFFECT(int uid, int eid) : uid(uid), eid(eid)
+	SC_PACKET_SPAWN_EFFECT(UID uid, int eid) : uid(uid), eid(eid)
 	{
 		size = sizeof(SC_PACKET_SPAWN_EFFECT);
 		type = SC_SPAWN_EFFECT;
 	};
-	int uid{};
+	UID uid{};
 	int eid{};
 };
 
-class CS_PACKET_REQEUST_LOGIN : public DEFAULT_PACKET
+class CS_PACKET_REQUEST_LOGIN : public DEFAULT_PACKET
 {
 public:
-	CS_PACKET_REQEUST_LOGIN()
+	CS_PACKET_REQUEST_LOGIN()
 	{
-		size = sizeof(CS_PACKET_REQEUST_LOGIN);
-		type = CS_REQEUST_LOGIN;
+		size = sizeof(CS_PACKET_REQUEST_LOGIN);
+		type = CS_REQUEST_LOGIN;
 	};
 	wchar_t name[NAME_LENGTH + 1]{};
 };
 
-class CS_PACKET_KEYUP : public DEFAULT_PACKET
+class CS_PACKET_ATTACK : public DEFAULT_PACKET
 {
 public:
-	CS_PACKET_KEYUP(char key) : key(key)
+	CS_PACKET_ATTACK(UID uid) : uid(uid)
 	{
-		size = sizeof(CS_PACKET_KEYUP);
-		type = CS_KEYUP;
+		size = sizeof(CS_PACKET_ATTACK);
+		type = CS_ATTACK;
 	};
-	char key;
+	UID uid;
 };
 
-class CS_PACKET_KEYDOWN : public DEFAULT_PACKET
+class CS_PACKET_MOVEDIR : public DEFAULT_PACKET
 {
 public:
-	CS_PACKET_KEYDOWN(char key) : key(key)
+	CS_PACKET_MOVEDIR(UID uid, float dx, float dy) : uid(uid), dx(dx), dy(dy)
 	{
-		size = sizeof(CS_PACKET_KEYDOWN);
-		type = CS_KEYDOWN;
+		size = sizeof(CS_PACKET_MOVEDIR);
+		type = CS_MOVEDIR;
 	};
-	char key;
+	UID uid;
+	float dx;
+	float dy;
 };
 
 class CS_PACKET_ENQUEUE : public DEFAULT_PACKET

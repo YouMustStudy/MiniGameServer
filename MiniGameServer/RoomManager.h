@@ -2,7 +2,7 @@
 #include <array>
 #include <stack>
 #include <chrono>
-#include "Common/Client.h"
+#include "Common/User.h"
 #include "Rooms/DMRoom.h"
 #include "LockFreeQueue.h"
 
@@ -15,9 +15,9 @@ enum RoomManagerJobType
 
 struct CreateRoomInfo
 {
-	CreateRoomInfo(const std::vector<Client*>& userList) : users(userList) {};
+	CreateRoomInfo(const std::vector<User*>& userList) : users(userList) {};
 
-	std::vector<Client*> users;
+	std::vector<User*> users;
 };
 
 /**

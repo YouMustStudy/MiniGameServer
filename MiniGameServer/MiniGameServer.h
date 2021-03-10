@@ -9,7 +9,7 @@
 #include ".\Common\CSOCKADDR_IN.h"
 #include ".\Common\Event.h"
 #include ".\Common\OverEx.h"
-#include ".\Common\Client.h"
+#include ".\Common\User.h"
 #include ".\Rooms\DMRoom.h"
 #include ".\Utills\Logger.h"
 #include "protocol.h"
@@ -71,7 +71,7 @@ private:
 	@param[in] buffer 수신 버퍼
 	@param[in] recvLength 수신한 크기
 	*/
-	void ParsePacket(size_t idx, Client* client, void* buffer, size_t recvLength);
+	void ParsePacket(size_t idx, User* client, void* buffer, size_t recvLength);
 
 	/**
 	@brief 패킷 해석 후 적절한 매니저에게 통보한다.
@@ -102,7 +102,7 @@ public:
 	@param[in] client 전송받을 유저
 	@param[in] buff 전송할 데이터
 	*/
-	void SendPacket(Client* client, void* buff);
+	void SendPacket(User* client, void* buff);
 
 	/**
 	@brief 타이머 이벤트를 추가한다.

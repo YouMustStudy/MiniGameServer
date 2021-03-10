@@ -92,7 +92,7 @@ void MiniGameServer::WorkerThread()
 		BOOL success = GetQueuedCompletionStatus(m_iocp, &ReceivedBytes, &key, &over, INFINITE);
 
 		OverEx* overEx = reinterpret_cast<OverEx*>(over);
-		Client* client = reinterpret_cast<Client*>(overEx);
+		User* client = reinterpret_cast<User*>(overEx);
 
 		if (nullptr == client || nullptr == overEx)
 			continue;
@@ -136,7 +136,6 @@ void MiniGameServer::WorkerThread()
 		}
 	}
 }
-
 void MiniGameServer::ProcessPacket(size_t idx, void* buffer)
 {
 	if (nullptr == buffer) return;
@@ -144,14 +143,19 @@ void MiniGameServer::ProcessPacket(size_t idx, void* buffer)
 	auto dp = reinterpret_cast<DEFAULT_PACKET*>(buffer);
 	switch (dp->type)
 	{
-	case CS_REQEUST_LOGIN:
-		UserManager::Instance().PushJob(USER_LOGIN,	new LoginInfo{idx});
+	case CS_REQUEST_LOGIN:
+	{
+		auto packet = reinterpret_cast<CS_PACKET_REQUEST_LOGIN*>(buffer);
+		UserManager::Instance().PushJob(USER_LOGIN, new LoginInfo(idx, packet->name));
+		break;
+	}
+
+	case CS_ENQUEUE:
+		UserManager::Instance().PushJob(USER_ENQUEUE, reinterpret_cast<void*>(idx));
 		break;
 
-	case CS_KEYUP:
-		break;
-
-	case CS_KEYDOWN:
+	case CS_DEQUEUE:
+		UserManager::Instance().PushJob(USER_DEQUEUE, reinterpret_cast<void*>(idx));
 		break;
 
 	default:
@@ -159,7 +163,6 @@ void MiniGameServer::ProcessPacket(size_t idx, void* buffer)
 		break;
 	}
 }
-
 void MiniGameServer::TimerThread()
 {
 	while (true) {
@@ -200,14 +203,14 @@ void MiniGameServer::AddEvent(size_t client, int et, high_resolution_clock::time
 	Event ev{ client, et, timePoint };
 	AddTimer(ev);
 }
-void MiniGameServer::ParsePacket(size_t idx, Client* client, void* buffer, size_t recvLength)
+void MiniGameServer::ParsePacket(size_t idx, User* client, void* buffer, size_t recvLength)
 {
 	if (nullptr == client || nullptr == buffer)
 		return;
 
 	size_t copySize = 0;
 	char* bufPos = reinterpret_cast<char*>(buffer);
-	size_t& savedSize = client->savedSize;
+	size_t& savedSize = client->savedPacket.len;
 	size_t& needSize = client->needSize;
 
 	while (0 < recvLength) {
@@ -219,6 +222,7 @@ void MiniGameServer::ParsePacket(size_t idx, Client* client, void* buffer, size_
 			if (sizeof(PACKET_SIZE) == needSize) 
 			{
 				needSize = *reinterpret_cast<PACKET_SIZE*>(client->savedPacket.data);
+				savedSize -= copySize;
 				continue;
 			}
 
@@ -228,7 +232,7 @@ void MiniGameServer::ParsePacket(size_t idx, Client* client, void* buffer, size_
 			savedSize = 0;
 			bufPos += copySize;
 			recvLength -= copySize;
-			needSize = sizeof(DEFAULT_PACKET);
+			needSize = sizeof(PACKET_SIZE);
 		}
 		else
 		{
@@ -237,8 +241,7 @@ void MiniGameServer::ParsePacket(size_t idx, Client* client, void* buffer, size_
 		}
 	}
 }
-
-void MiniGameServer::SendPacket(Client* client, void* buff)
+void MiniGameServer::SendPacket(User* client, void* buff)
 {
 	if (nullptr != client && nullptr != buff)
 	{
@@ -250,7 +253,6 @@ void MiniGameServer::SendPacket(Client* client, void* buff)
 		}
 	}
 }
-
 void MiniGameServer::PostEvent(size_t key, int eventType)
 {
 	OverEx* overEx = new OverEx;
@@ -261,7 +263,6 @@ void MiniGameServer::PostEvent(size_t key, int eventType)
 		PostQueuedCompletionStatus(m_iocp, 1, key, overEx->Overlapped());
 	}
 }
-
 void MiniGameServer::PostEvent(size_t key, int eventType, void* args)
 {
 	OverEx* overEx = new OverEx;

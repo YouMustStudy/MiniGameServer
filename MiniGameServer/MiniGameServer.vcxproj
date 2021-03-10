@@ -139,7 +139,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Common\Client.cpp" />
+    <ClCompile Include="Common\User.cpp" />
     <ClCompile Include="Common\CSOCKADDR_IN.cpp" />
     <ClCompile Include="Common\Event.cpp" />
     <ClCompile Include="Common\OverEx.cpp" />
@@ -156,7 +156,7 @@
     <ClCompile Include="Utills\UtilFunc.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Common\Client.h" />
+    <ClInclude Include="Common\User.h" />
     <ClInclude Include="Common\CSOCKADDR_IN.h" />
     <ClInclude Include="Common\Event.h" />
     <ClInclude Include="Common\OverEx.h" />
