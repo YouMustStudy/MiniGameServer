@@ -117,6 +117,8 @@ void DMRoom::ProcessAttack(UID uid)
 		|| EState::MOVE == characterList[uid]->_playerInfo.curState)
 	{
 		characterList[uid]->_playerInfo.curState = EState::ATTACK_READY;
+		characterList[uid]->_playerInfo.animTime = 0.0f;
+		//공격패킷 중계
 		SC_PACKET_ATTACK atkPacket{ uid };
 		eventData.EmplaceBack(&atkPacket, atkPacket.size);
 	}

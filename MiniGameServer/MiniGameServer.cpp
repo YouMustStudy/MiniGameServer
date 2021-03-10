@@ -160,7 +160,10 @@ void MiniGameServer::ProcessPacket(User* user, size_t idx, void* buffer)
 	case CS_ATTACK:
 	{
 		if (nullptr != user->roomPtr)
-			user->roomPtr->PushJob(CS_ATTACK, reinterpret_cast<void*>(idx));
+		{
+			auto packet = reinterpret_cast<CS_PACKET_ATTACK*>(buffer);
+			user->roomPtr->PushJob(CS_ATTACK, reinterpret_cast<void*>(packet->uid));
+		}
 		break;
 	}
 	case CS_MOVEDIR:
