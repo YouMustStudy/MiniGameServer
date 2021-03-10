@@ -16,9 +16,8 @@
 
 #pragma comment(lib, "ws2_32")
 
-enum CL_STATE { ST_IDLE, ST_QUEUE, ST_PLAY };
 enum EVENT_TYPE { EV_ACCEPT, EV_DISCONN, EV_RECV, EV_SEND, EV_UPDATE };
-constexpr auto RECV_BUF_SIZE = 512;
+constexpr auto RECV_BUF_SIZE = 1024;
 
 /**
 @brief 미니게임서버

@@ -29,6 +29,7 @@ enum CS_PACKET
 
 	//To Room
 	CS_UPDATE,					///< 방 업데이트 요청
+	CS_LEAVEROOM,				///< 유저 접속 종료 요청
 	CS_ATTACK,					///< 유저 공격요청
 	CS_MOVEDIR,					///< 유저 움직임 요청
 	CS_COUNT

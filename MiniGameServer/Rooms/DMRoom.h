@@ -23,7 +23,7 @@ public:
 	void SetQueueType(QueueType queType);
 
 	void Init();								//Not Thread-Safe, RoomManager에서만 호출할 것.
-	void Regist(std::vector<User*> clients);	//Not Thread-Safe, RoomManager에서만 호출할 것.
+	void Regist(std::vector<User*> users);	//Not Thread-Safe, RoomManager에서만 호출할 것.
 	bool IsEnd() { return isEnd; };
 
 
@@ -46,7 +46,7 @@ private:
 	bool GameLogic();
 	void SendGameState();
 
-	void Disconnect();
+	void Disconnect(User* user);
 	void End();
 	void Update();
 };

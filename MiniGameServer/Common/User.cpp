@@ -1,5 +1,6 @@
 #include "User.h"
 #include "..\Utills\Logger.h"
+#include "..\Rooms\DMRoom.h"
 
 void User::SetRecv()
 {

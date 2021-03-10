@@ -12,7 +12,8 @@ enum UserJobType
 	USER_DISCONN,
 	USER_LOGIN,
 	USER_ENQUEUE,
-	USER_DEQUEUE
+	USER_DEQUEUE,
+	USER_LEAVEROOM
 };
 
 struct AcceptInfo
@@ -46,6 +47,9 @@ private:
 	void ProcessLogin(LoginInfo* info);
 	void ProcessEnqueue(size_t idx);
 	void ProcessDequeue(size_t idx);
+	void ProcessLeaveRoom(size_t idx);
+
+	void DisconnectUser(size_t idx);
 
 	static constexpr size_t MAX_USER_SIZE = 1000;
 	std::array<User, MAX_USER_SIZE> userList;

@@ -2,8 +2,11 @@
 #include "..\Common\User.h"
 #include "..\Utills\Logger.h"
 #include "..\protocol.h"
+
 #include "..\RoomManager.h"
+#include "..\UserManager.h"
 #include "..\MiniGameServer.h"
+
 
 DMRoom::DMRoom()
 {
@@ -18,9 +21,16 @@ void DMRoom::Init()
 	lastUpdateTime = std::chrono::high_resolution_clock::now();
 }
 
-void DMRoom::Regist(std::vector<User*> clients)
+void DMRoom::Regist(std::vector<User*> users)
 {
 	//유저 등록 처리
+	for (auto& user : users)
+	{
+		if (nullptr != user)
+		{
+			user->roomPtr = this;
+		}
+	}
 	return;
 }
 
@@ -32,15 +42,24 @@ void DMRoom::ProcessJob(Job job)
 		Update();
 		break;
 
+	case CS_LEAVEROOM:
+		Disconnect(reinterpret_cast<User*>(job.second));
+		break;
+
 	default:
 		Logger::Log("처리되지 않은 룸 잡 발견");
 		break;
 	}
 }
 
-void DMRoom::Disconnect()
+void DMRoom::Disconnect(User* user)
 {
 	//유저를 룸에서 삭제 및 유저 매니저에 통보.
+	if (nullptr != user)
+	{
+		user->roomPtr = nullptr;
+		UserManager::Instance().PushJob(USER_LEAVEROOM, reinterpret_cast<void*>(user->uid));
+	}
 }
 
 void DMRoom::End()

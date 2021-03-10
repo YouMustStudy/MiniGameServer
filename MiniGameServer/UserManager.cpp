@@ -33,6 +33,10 @@ void UserManager::ProcessJob(Job job)
 		ProcessDequeue(reinterpret_cast<size_t>(job.second));
 		break;
 
+	case USER_LEAVEROOM:
+		ProcessLeaveRoom(reinterpret_cast<size_t>(job.second));
+		break;
+
 	default:
 		Logger::Log("처리되지 않은 유저 매니저 잡 발견");
 		break;
@@ -46,6 +50,9 @@ UserManager::UserManager()
 	//인덱스 풀 초기화.
 	for (size_t idx = 1; MAX_USER_SIZE >= idx ; ++idx)
 		indexPool.push(MAX_USER_SIZE - idx);
+	//유저 초기화
+	for (size_t idx = 0; MAX_USER_SIZE > idx; ++idx)
+		userList[idx].uid = idx;
 }
 
 void UserManager::ProcessAccept(AcceptInfo* info)
@@ -67,8 +74,15 @@ void UserManager::ProcessAccept(AcceptInfo* info)
 	size_t userIdx = indexPool.top(); 
 	indexPool.pop();
 
+	if (ST_DISCONN != userList[userIdx].state)
+	{
+		Logger::Log("재사용할 수 없는 유저 할당");
+		return;
+	}
+
 	userList[userIdx].socket = info->socket;
 	userList[userIdx].addr = info->addr;
+	userList[userIdx].state = ST_NOLOGIN;
 	userList[userIdx].recvOver.Init(RECV_BUF_SIZE);
 	userList[userIdx].recvOver.SetEvent(EV_RECV);
 
@@ -87,28 +101,32 @@ void UserManager::ProcessAccept(AcceptInfo* info)
 
 void UserManager::ProcessDisconnect(size_t idx)
 {
-	//룸 퇴장 추가
+	//유저 상태 전환 후
+	userList[idx].state = ST_DISCONN;
 
-	closesocket(userList[idx].socket);
-	userList[idx].socket = INVALID_SOCKET;
-	userIDSet.erase(userList[idx].id);
-
-	char nameBuf[INET_ADDRSTRLEN]{ 0, };
-	inet_ntop(AF_INET, &userList[idx].addr.sin_addr, nameBuf, INET_ADDRSTRLEN);
-	Logger::Log("유저 종료 : " + std::string(nameBuf) + ":" + std::to_string(userList[idx].addr.sin_port));
-
-	indexPool.push(idx);
+	//방에 있으면 방 나가기 처리.
+	if (nullptr != userList[idx].roomPtr)
+		userList[idx].roomPtr->PushJob(CS_LEAVEROOM, reinterpret_cast<void*>(&userList[idx]));
+	else
+		DisconnectUser(idx);
 }
 
 void UserManager::ProcessLogin(LoginInfo* info)
 {
 	if (nullptr == info)
 	{
-		Logger::Log("잘못된 로그인 시도 발생");
+		Logger::Log("잘못된 로그인 요청 발생 - null");
 		return;
 	}
 
 	size_t reqUser = info->idx;
+	if (ST_NOLOGIN != userList[reqUser].state)
+	{
+		Logger::Log("잘못된 로그인 요청 발생 - 유저가 NOLOGIN 상태가 아님");
+		return;
+	}
+
+	userList[reqUser].state = ST_NOLOGIN;
 	//DB 아이디, 비밀번호 검증
 
 	//중복 로그인 체크
@@ -122,6 +140,7 @@ void UserManager::ProcessLogin(LoginInfo* info)
 
 	//로그인 OK!!
 	userList[reqUser].id = info->id;
+	userList[reqUser].state = ST_IDLE;
 	userIDSet.emplace(info->id);
 	Logger::Log("유저 로그인 성공");
 
@@ -134,30 +153,70 @@ void UserManager::ProcessLogin(LoginInfo* info)
 void UserManager::ProcessEnqueue(size_t idx)
 {
 	//유저 상태체크 넣어야함
-	matchQueue.Enqueue(idx);
-	SC_PACKET_CHANGE_QUEUE packet{ true };
-	MiniGameServer::Instance().SendPacket(&userList[idx], &packet);
-	Logger::Log("매치큐 등록");
-
-	if (true == matchQueue.CanMakeMake())
+	if (ST_IDLE == userList[idx].state)
 	{
-		std::vector<size_t> matchUsers;
-		if (false == matchQueue.MatchMake(matchUsers)) return;
+		matchQueue.Enqueue(idx);
+		userList[idx].state = ST_QUEUE;
+		SC_PACKET_CHANGE_QUEUE packet{ true };
+		MiniGameServer::Instance().SendPacket(&userList[idx], &packet);
+		Logger::Log("매치큐 등록");
 
-		//룸매니저에게 통보.
-		std::vector<User*> matchUserPtrs;
-		for (auto userIdx : matchUsers)
-			matchUserPtrs.emplace_back(&userList[userIdx]);
-		RoomManager::Instance().PushJob(RMGR_CREATE, new CreateRoomInfo(matchUserPtrs));
-		Logger::Log("인원수 충족, 룸 매니저에 방 생성 요청");
+		if (true == matchQueue.CanMakeMake())
+		{
+			std::vector<size_t> matchUsers;
+			if (false == matchQueue.MatchMake(matchUsers)) return;
+
+			//룸매니저에게 통보.
+			std::vector<User*> matchUserPtrs;
+			for (auto userIdx : matchUsers)
+			{
+				matchUserPtrs.emplace_back(&userList[userIdx]);
+				userList[userIdx].state = ST_PLAY;
+			}
+			RoomManager::Instance().PushJob(RMGR_CREATE, new CreateRoomInfo(matchUserPtrs));
+			Logger::Log("인원수 충족, 룸 매니저에 방 생성 요청");
+		}
 	}
 }
 
 void UserManager::ProcessDequeue(size_t idx)
 {
 	//유저 상태체크 넣어야함
-	matchQueue.Dequeue(idx);
-	SC_PACKET_CHANGE_QUEUE packet{ false };
-	MiniGameServer::Instance().SendPacket(&userList[idx], &packet);
-	Logger::Log("매치큐 등록 해제");
+	if (ST_QUEUE == userList[idx].state)
+	{
+		matchQueue.Dequeue(idx);
+		SC_PACKET_CHANGE_QUEUE packet{ false };
+		MiniGameServer::Instance().SendPacket(&userList[idx], &packet);
+		Logger::Log("매치큐 등록 해제");
+	}
+}
+
+void UserManager::ProcessLeaveRoom(size_t idx)
+{
+	switch (userList[idx].state)
+	{
+	case ST_PLAY:
+		//유저는 다시 로비로
+		userList[idx].state = ST_IDLE;
+		break;
+
+	case ST_DISCONN:
+		//세션 종료 등 마지막 최종 정리
+		DisconnectUser(idx);
+		break;
+	}
+}
+
+void UserManager::DisconnectUser(size_t idx)
+{
+	if (ST_DISCONN == userList[idx].state)
+	{
+		closesocket(userList[idx].socket);
+		userList[idx].socket = INVALID_SOCKET;
+		userIDSet.erase(userList[idx].id);
+		char nameBuf[INET_ADDRSTRLEN]{ 0, };
+		inet_ntop(AF_INET, &userList[idx].addr.sin_addr, nameBuf, INET_ADDRSTRLEN);
+		Logger::Log("유저 종료 : " + std::string(nameBuf) + ":" + std::to_string(userList[idx].addr.sin_port));
+		indexPool.push(idx);
+	}
 }
