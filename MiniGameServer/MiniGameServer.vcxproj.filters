@@ -87,6 +87,12 @@
     <ClCompile Include="Common\User.cpp">
       <Filter>Common\User</Filter>
     </ClCompile>
+    <ClCompile Include="Character.cpp">
+      <Filter>Room</Filter>
+    </ClCompile>
+    <ClCompile Include="Utills\Vector3d.cpp">
+      <Filter>Utills</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MiniGameServer.h">
@@ -127,6 +133,12 @@
     </ClInclude>
     <ClInclude Include="Common\User.h">
       <Filter>Common\User</Filter>
+    </ClInclude>
+    <ClInclude Include="Character.h">
+      <Filter>Room</Filter>
+    </ClInclude>
+    <ClInclude Include="Utills\Vector3d.h">
+      <Filter>Utills</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

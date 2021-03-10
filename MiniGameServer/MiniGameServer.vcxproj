@@ -139,6 +139,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Character.cpp" />
     <ClCompile Include="Common\User.cpp" />
     <ClCompile Include="Common\CSOCKADDR_IN.cpp" />
     <ClCompile Include="Common\Event.cpp" />
@@ -154,8 +155,10 @@
     <ClCompile Include="UserManager.cpp" />
     <ClCompile Include="Utills\Logger.cpp" />
     <ClCompile Include="Utills\UtilFunc.cpp" />
+    <ClCompile Include="Utills\Vector3d.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Character.h" />
     <ClInclude Include="Common\User.h" />
     <ClInclude Include="Common\CSOCKADDR_IN.h" />
     <ClInclude Include="Common\Event.h" />
@@ -169,6 +172,7 @@
     <ClInclude Include="UserManager.h" />
     <ClInclude Include="Utills\Logger.h" />
     <ClInclude Include="Utills\UtilFunc.h" />
+    <ClInclude Include="Utills\Vector3d.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

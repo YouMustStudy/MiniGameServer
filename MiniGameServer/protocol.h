@@ -3,14 +3,18 @@
 //Server -> Client.
 enum SC_PACKET
 {
+	//Main
 	SC_CONNECT_OK,				///< 연결 성공
 	SC_LOGIN_OK,				///< 로그인 성공
 	SC_LOGIN_FAIL,				///< 로그인 실패
 	SC_CHANGE_QUEUE,			///< 매치큐 대기상태 변경
 	SC_CHANGE_SCENE,			///< 게임시작, 종료를 알림
+
+	//Game
 	SC_UID,						///< 유저에게 게임 UID 전송
 	SC_SPAWN_CHARACTER,			///< 캐릭터 오브젝트 추가
 	SC_DESTROY_CHARACTER,		///< 캐릭터 오브젝트 삭제
+	SC_ATTACK,				///< 캐릭터 공격
 	SC_GET_ITEM,				///< 캐릭터 아이템 획득
 	SC_CHANGE_HP,				///< 캐릭터 체력 변경
 	SC_CHANGE_SCORE,			///< 캐릭터 스코어 변경
@@ -33,6 +37,12 @@ enum CS_PACKET
 	CS_ATTACK,					///< 유저 공격요청
 	CS_MOVEDIR,					///< 유저 움직임 요청
 	CS_COUNT
+};
+
+enum SCENE_TYPE
+{
+	SCENE_MAIN,
+	SCENE_GAME
 };
 
 using PACKET_TYPE = unsigned char;
@@ -108,6 +118,17 @@ public:
 	SCENETYPE scene;
 };
 
+class SC_PACKET_ATTACK : public DEFAULT_PACKET
+{
+public:
+	SC_PACKET_ATTACK(UID uid) : uid(uid)
+	{
+		size = sizeof(SC_PACKET_ATTACK);
+		type = SC_ATTACK;
+	};
+	UID uid;
+};
+
 class SC_PACKET_UID : public DEFAULT_PACKET
 {
 public:
@@ -122,7 +143,7 @@ public:
 class SC_PACKET_SPAWN_CHARACTER : public DEFAULT_PACKET
 {
 public:
-	SC_PACKET_SPAWN_CHARACTER(int uid, int characterType, float x, float y) : uid(uid), characterType(characterType)
+	SC_PACKET_SPAWN_CHARACTER(UID uid, int characterType, float x, float y) : uid(uid), characterType(characterType)
 	{
 		size = sizeof(SC_PACKET_SPAWN_CHARACTER);
 		type = SC_SPAWN_CHARACTER;
@@ -198,7 +219,6 @@ public:
 	UID uid{};
 	float pos[2]{};
 	float dir[2]{};
-	char animIndex{0};
 };
 
 class SC_PACKET_SPAWN_EFFECT : public DEFAULT_PACKET

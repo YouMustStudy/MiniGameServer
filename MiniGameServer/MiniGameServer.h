@@ -77,7 +77,7 @@ private:
 	@param[in] idx 수신한 유저의 인덱스
 	@param[in] buffer 패킷이 담긴 버퍼
 	*/
-	void ProcessPacket(size_t idx, void* buffer);
+	void ProcessPacket(User* user, size_t idx, void* buffer);
 
 	/**
 	@brief 타이머 스레드 함수
@@ -97,11 +97,19 @@ public:
 	~MiniGameServer();
 
 	/**
-	@brief 유저에게 패킷을 전송함
+	@brief 유저에게 패킷 '하나'를 전송함
 	@param[in] client 전송받을 유저
 	@param[in] buff 전송할 데이터
 	*/
 	void SendPacket(User* client, void* buff);
+
+	/**
+	@brief 유저에게 데이터 스트림을 전송함
+	@param[in] client 전송받을 유저
+	@param[in] buff 전송할 데이터
+	@param[in] len 전송할 데이터의 길이
+	*/
+	void SendPacket(User* client, void* buff, size_t len);
 
 	/**
 	@brief 타이머 이벤트를 추가한다.

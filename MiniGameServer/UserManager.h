@@ -36,6 +36,7 @@ public:
 
 	static UserManager& Instance();
 	void SetIOCPHandle(HANDLE iocp) { workerIOCP = iocp; };
+	User* GetUser(size_t idx) { return &userList[idx]; };
 protected:
 	virtual void ProcessJob(Job job) override;
 

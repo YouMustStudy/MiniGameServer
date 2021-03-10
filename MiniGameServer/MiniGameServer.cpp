@@ -136,7 +136,7 @@ void MiniGameServer::WorkerThread()
 		}
 	}
 }
-void MiniGameServer::ProcessPacket(size_t idx, void* buffer)
+void MiniGameServer::ProcessPacket(User* user, size_t idx, void* buffer)
 {
 	if (nullptr == buffer) return;
 
@@ -149,7 +149,6 @@ void MiniGameServer::ProcessPacket(size_t idx, void* buffer)
 		UserManager::Instance().PushJob(USER_LOGIN, new LoginInfo(idx, packet->name));
 		break;
 	}
-
 	case CS_ENQUEUE:
 		UserManager::Instance().PushJob(USER_ENQUEUE, reinterpret_cast<void*>(idx));
 		break;
@@ -157,6 +156,24 @@ void MiniGameServer::ProcessPacket(size_t idx, void* buffer)
 	case CS_DEQUEUE:
 		UserManager::Instance().PushJob(USER_DEQUEUE, reinterpret_cast<void*>(idx));
 		break;
+
+	case CS_ATTACK:
+	{
+		if (nullptr != user->roomPtr)
+			user->roomPtr->PushJob(CS_ATTACK, reinterpret_cast<void*>(idx));
+		break;
+	}
+	case CS_MOVEDIR:
+	{
+		if (nullptr != user->roomPtr)
+		{
+			auto packet = reinterpret_cast<CS_PACKET_MOVEDIR*>(buffer);
+			user->roomPtr->PushJob(CS_ATTACK, reinterpret_cast<void*>(
+				new MoveDirInfo(packet->uid, packet->dx, packet->dy)
+				));
+		}
+		break;
+	}
 
 	default:
 		Logger::Log("처리되지 않은 유저 패킷 수신" + std::to_string(dp->type));
@@ -227,7 +244,7 @@ void MiniGameServer::ParsePacket(size_t idx, User* client, void* buffer, size_t 
 			}
 
 			//패킷 처리
-			ProcessPacket(idx, client->savedPacket.data);
+			ProcessPacket(client, idx, client->savedPacket.data);
 
 			savedSize = 0;
 			bufPos += copySize;
@@ -249,6 +266,18 @@ void MiniGameServer::SendPacket(User* client, void* buff)
 		{
 			OverEx* sendOver = new OverEx{ EV_SEND, buff };
 			if(nullptr != sendOver)
+				WSASend(client->socket, sendOver->Buffer(), 1, 0, 0, sendOver->Overlapped(), 0);
+		}
+	}
+}
+void MiniGameServer::SendPacket(User* client, void* buff, size_t len)
+{
+	if (nullptr != client && nullptr != buff)
+	{
+		if (INVALID_SOCKET != client->socket)
+		{
+			OverEx* sendOver = new OverEx{ EV_SEND, buff, len };
+			if (nullptr != sendOver)
 				WSASend(client->socket, sendOver->Buffer(), 1, 0, 0, sendOver->Overlapped(), 0);
 		}
 	}
