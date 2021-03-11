@@ -37,6 +37,7 @@ struct FPlayerInfo {
 		float moveSpeed{1000.0f};			//이동속도
 		float dropSpeed{0.0f};
 		bool bFlipX{};					//true 왼쪽 바라보는상태
+		int hitCount{1};
 		ESpriteType	sprite{};				//sprite 종류
 		EState		curState{};			//현재 상태
 		float animTime{0.0f};

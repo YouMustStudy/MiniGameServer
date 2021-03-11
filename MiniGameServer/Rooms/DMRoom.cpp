@@ -191,12 +191,14 @@ void DMRoom::UpdateCollider()
 				/* 피격체의 콜라이더를 피격당한상태로 바꾸고, 밀려날 위치를 부여한다. */
 				chB.GetHitCollider()._bAttacked = true;
 				chB.GetHitCollider()._attackedPos = Vector3d(
-					chB._playerInfo.pos.x + (chA.GetAttackCollider()._knockBackPower * disVec.x),
-					chB._playerInfo.pos.y + (chA.GetAttackCollider()._knockBackPower * disVec.y),
+					chB._playerInfo.pos.x + (chB._playerInfo.hitCount * chA.GetAttackCollider()._knockBackPower * disVec.x),
+					chB._playerInfo.pos.y + (chB._playerInfo.hitCount * chA.GetAttackCollider()._knockBackPower * disVec.y),
 					chB._playerInfo.pos.z
 				);
+				++chB._playerInfo.hitCount;
 			}
 		}
+		chA.GetAttackCollider()._enabled == false;
 	}
 
 	for (auto& ch : characterList) // 공격하는 플레이어

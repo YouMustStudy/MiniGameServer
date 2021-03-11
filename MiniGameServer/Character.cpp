@@ -46,6 +46,7 @@ void Character::Update(float fTime)
 			_playerInfo.curState = EState::IDLE;
 			_playerInfo.pos = Vector3d{ 0, 0, 0 };
 			_playerInfo.dropSpeed = 0.0f;
+			_playerInfo.hitCount = 1;
 		}
 	}
 		break;
