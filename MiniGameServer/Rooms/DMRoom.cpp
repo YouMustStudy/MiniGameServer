@@ -121,12 +121,20 @@ void DMRoom::ProcessAttack(UID uid)
 	if (EState::IDLE == characterList[uid]._playerInfo.curState
 		|| EState::MOVE == characterList[uid]._playerInfo.curState)
 	{
+		// 대쉬 앵커
+		characterList[uid]._hitColl._attackedPos = Vector3d(
+			characterList[uid]._playerInfo.pos.x + characterList[uid]._playerInfo.dir.x * characterList[uid]._playerInfo.moveSpeed * deltaTime * 25.f,
+			characterList[uid]._playerInfo.pos.y + characterList[uid]._playerInfo.dir.y * characterList[uid]._playerInfo.moveSpeed * deltaTime * 25.f,
+			characterList[uid]._playerInfo.pos.z);
+		characterList[uid]._hitColl._bAttacked = true;
+
 		// 어택하면 일단 제자리
 		characterList[uid]._playerInfo.dir.x = 0;
 		characterList[uid]._playerInfo.dir.y = 0;
 
 		characterList[uid]._playerInfo.curState = EState::ATTACK_READY;
 		characterList[uid]._playerInfo.animTime = 0.0f;
+
 		//공격패킷 중계
 		SC_PACKET_ATTACK atkPacket{ uid };
 		eventData.EmplaceBack(&atkPacket, atkPacket.size);
@@ -203,6 +211,12 @@ void DMRoom::UpdateCollider()
 					chB._playerInfo.pos.z
 				);
 				++chB._playerInfo.hitCount;
+				if(chB._playerInfo.hp > 0)
+					--chB._playerInfo.hp;
+
+				//체력 감소 패킷
+				SC_PACKET_CHANGE_HP changeHPPacket{ chB.id ,chB._playerInfo.hp };
+				eventData.EmplaceBack(&changeHPPacket, changeHPPacket.size);
 
 				// 이펙트 소환 패킷 중계
 				SC_PACKET_SPAWN_EFFECT effectPacket{0, (int)EObjectType::HitEffect, chB._playerInfo.pos.x, chB._playerInfo.pos.y, chB._playerInfo.pos.z};
@@ -219,6 +233,11 @@ void DMRoom::UpdateCollider()
 		{
 			ch._playerInfo.curState = EState::DIE;
 			ch.GetAttackCollider()._enabled = false;
+
+			//체력 감소 패킷
+			ch._playerInfo.hp = ch._playerInfo.hpm;
+			SC_PACKET_CHANGE_HP changeHPPacket{ ch.id ,ch._playerInfo.hp };
+			eventData.EmplaceBack(&changeHPPacket, changeHPPacket.size);
 		}
 	}
 }

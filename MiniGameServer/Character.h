@@ -35,11 +35,11 @@ enum class EObjectType : unsigned char {
 
 // 플레이어 정보
 struct FPlayerInfo {
-	int id{};							// 네트워크 id
+		int id{};							// 네트워크 id
 		Vector3d pos{};					//x좌표
 		Vector3d dir{};					//방향
-		float hp{};						//체력
-		float hpm{};						//최대체력
+		int hp{3};						//체력
+		int hpm{3};						//최대체력
 		float attackPower{};				//공격력
 		float moveSpeed{1000.0f};			//이동속도
 		float dropSpeed{0.0f};
@@ -62,7 +62,7 @@ struct Collider {
 	float _attackPower{};					// 공격력	(AttackCollider 전용)
 
 	bool	_bAttacked{false};				// 공격 당한 상태 (HitCollider 전용)
-	Vector3d _attackedPos{0, 0, 0};			// 밀려나서 가야할 위치 (HitCollider 전용)
+	Vector3d _attackedPos{0, 0, 0};			// 밀려나서 가야할 위치 + 대쉬 위치 (HitCollider 전용)
 
 	Collider() {}
 
