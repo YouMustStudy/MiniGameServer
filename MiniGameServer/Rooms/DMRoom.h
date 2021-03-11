@@ -25,7 +25,14 @@ struct MoveDirInfo
 룸
 실제 게임이 이뤄지는 객체
 
+GameLogic (종료체크도 시행)
+SendGameState (게임 상태 전송)
+
+게임 종료 시 룸매니저로 회수 요청하는 로직으로 구성
+
 */
+constexpr float MAP_WIDTH = 1000.0f;
+constexpr float MAP_HEIGHT = 1000.0f;
 class DMRoom : public LockFreeQueue
 {
 public:
@@ -37,9 +44,6 @@ public:
 	void Init();							//Not Thread-Safe, RoomManager에서만 호출할 것.
 	void Regist(std::vector<User*> users);	//Not Thread-Safe, RoomManager에서만 호출할 것.
 	bool IsEnd() { return isEnd; };
-
-	std::vector<Character> characterList{};
-	std::vector<User*> userList{};
 
 protected:
 	virtual void ProcessJob(Job job) override;
@@ -53,15 +57,14 @@ private:
 	void Update();
 
 	//기본 방 운영 정보
-	static constexpr long long UPDATE_INTERVAL = 20;
-	std::chrono::high_resolution_clock::time_point currentUpdateTime;
-	std::chrono::high_resolution_clock::time_point lastUpdateTime;
+	static constexpr long long UPDATE_INTERVAL = 20;					//업데이트 간격
+	std::chrono::high_resolution_clock::time_point currentUpdateTime;	//deltaTime 측정용
+	std::chrono::high_resolution_clock::time_point lastUpdateTime;		//상동
 
 	PacketVector eventData; //전송될 이벤트 패킷(플레이어 힛, 리스폰 등)
 	PacketVector infoData;  //전송될 위치정보 패킷
-	bool isEnd{false};
-	float deltaTime{};
-	//float left_time{1.0f};
+	bool isEnd{false};		//게임이 끝났는가?
+	float deltaTime{};		//매 틱 변한 시간
 
 	//실제 게임 처리
 	void ProcessAttack(UID uid);
@@ -72,4 +75,9 @@ private:
 	void UpdatePos(Character& character);
 	void UpdateCollider();
 	bool CheckCollider(Collider& a, Collider& b);
+
+	std::vector<Character> characterList{};	//플레이하는 '캐릭터' 컨테이너
+	std::vector<User*> userList{};			//플레이중인 '유저' 컨테이너
+
+	Collider mapCollider{ 0, 0, MAP_WIDTH, MAP_HEIGHT, {0, 0, 0} };
 };

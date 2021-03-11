@@ -167,11 +167,14 @@ void DMRoom::KnockBack(Character& character)
 	}
 
 	// 플레이어 현재 위치와 넉백 최종위치 보간 
-	character._playerInfo.pos = Vector3d::lerp(pos, character.GetHitCollider()._attackedPos, 10 * deltaTime);
+	Vector3d dst = Vector3d::lerp(pos, character.GetHitCollider()._attackedPos, 10 * deltaTime);
+	character._playerInfo.pos.x = dst.x;
+	character._playerInfo.pos.y = dst.y;
 }
 
 void DMRoom::UpdatePos(Character& character)
 {
+	//if(EState::IDLE == character.GetCurState())
 	character._playerInfo.pos += character._playerInfo.dir * character._playerInfo.moveSpeed * deltaTime;
 }
 
@@ -193,10 +196,11 @@ void DMRoom::UpdateCollider()
 				/* 피격체의 콜라이더를 피격당한상태로 바꾸고, 밀려날 위치를 부여한다. */
 				chB.GetHitCollider()._bAttacked = true;
 				chB.GetHitCollider()._attackedPos = Vector3d(
-					chB._playerInfo.pos.x + (chA.GetAttackCollider()._knockBackPower * disVec.x),
-					chB._playerInfo.pos.y + (chA.GetAttackCollider()._knockBackPower * disVec.y),
+					chB._playerInfo.pos.x + (chB._playerInfo.hitCount * chA.GetAttackCollider()._knockBackPower * disVec.x),
+					chB._playerInfo.pos.y + (chB._playerInfo.hitCount * chA.GetAttackCollider()._knockBackPower * disVec.y),
 					chB._playerInfo.pos.z
 				);
+				++chB._playerInfo.hitCount;
 
 				// 이펙트 소환 패킷 중계
 				SC_PACKET_SPAWN_EFFECT effectPacket{0, (int)EObjectType::HitEffect, chB._playerInfo.pos.x, chB._playerInfo.pos.y, chB._playerInfo.pos.z};
@@ -204,6 +208,16 @@ void DMRoom::UpdateCollider()
 			}
 		}
 		chA.GetAttackCollider()._enabled = false;
+	}
+
+	for (auto& ch : characterList) // 공격하는 플레이어
+	{
+		//맵 밖으로 벗어나면
+		if (false == CheckCollider(mapCollider, ch.GetHitCollider()))
+		{
+			ch._playerInfo.curState = EState::DIE;
+			ch.GetAttackCollider()._enabled = false;
+		}
 	}
 }
 
@@ -236,7 +250,7 @@ void DMRoom::SendGameState()
 	for (size_t i = 0; i < characterList.size(); ++i)
 	{
 		SC_PACKET_CHARACTER_INFO infoPacket{i, 
-			characterList[i]._playerInfo.pos.x, characterList[i]._playerInfo.pos.y,
+			characterList[i]._playerInfo.pos.x, characterList[i]._playerInfo.pos.y, characterList[i]._playerInfo.pos.z,
 			characterList[i]._playerInfo.dir.x, characterList[i]._playerInfo.dir.y};
 		infoData.EmplaceBack(&infoPacket, infoPacket.size);
 	}

@@ -33,5 +33,22 @@ void Character::Update(float fTime)
 			_attackColl._enabled = false;
 		}
 		break;
+
+	case EState::DIE:
+	{
+		static const float DROP_SPEED = 1000.0f;
+		static const float DEATH_HEIGHT = -500.0f;
+		_playerInfo.dropSpeed += DROP_SPEED * fTime;
+		_playerInfo.pos.z -= _playerInfo.dropSpeed * fTime;
+		if (DEATH_HEIGHT >= _playerInfo.pos.z)
+		{
+			//일정 높이 이하로 낙하했으면 리스폰.
+			_playerInfo.curState = EState::IDLE;
+			_playerInfo.pos = Vector3d{ 0, 0, 0 };
+			_playerInfo.dropSpeed = 0.0f;
+			_playerInfo.hitCount = 1;
+		}
+	}
+		break;
 	}
 }

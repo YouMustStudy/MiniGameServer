@@ -207,17 +207,18 @@ public:
 class SC_PACKET_CHARACTER_INFO : public DEFAULT_PACKET
 {
 public:
-	SC_PACKET_CHARACTER_INFO(UID uid, float x, float y, float dx, float dy) : uid(uid)
+	SC_PACKET_CHARACTER_INFO(UID uid, float x, float y, float z, float dx, float dy) : uid(uid)
 	{
 		size = sizeof(SC_PACKET_CHARACTER_INFO);
 		type = SC_CHARACTER_INFO;
 		pos[0] = x;
 		pos[1] = y;
+		pos[2] = z;
 		dir[0] = dx;
 		dir[1] = dy;
 	};
 	UID uid{};
-	float pos[2]{};
+	float pos[3]{};
 	float dir[2]{};
 };
 
