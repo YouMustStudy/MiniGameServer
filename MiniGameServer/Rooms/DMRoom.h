@@ -38,7 +38,7 @@ public:
 	void Regist(std::vector<User*> users);	//Not Thread-Safe, RoomManager에서만 호출할 것.
 	bool IsEnd() { return isEnd; };
 
-	std::vector<Character*> characterList{};
+	std::vector<Character> characterList{};
 	std::vector<User*> userList{};
 
 protected:
