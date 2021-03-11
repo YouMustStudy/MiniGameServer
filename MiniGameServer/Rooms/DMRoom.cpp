@@ -136,7 +136,8 @@ void DMRoom::ProcessAttack(UID uid)
 void DMRoom::ProcessMoveDir(MoveDirInfo* info)
 {
 	if (nullptr == info) return;
-	if (characterList[info->uid]._playerInfo.curState == EState::ATTACK_READY) return; // 어택상태이면 클라로부터 컨트롤러값 안받음
+	if (characterList[info->uid]._playerInfo.curState == EState::ATTACK_READY ||
+		characterList[info->uid]._hitColl._bAttacked == true) return; // 어택상태이거나, 피격중이면 클라로부터 컨트롤러값 안받음
 	characterList[info->uid]._playerInfo.dir.x = info->x;
 	characterList[info->uid]._playerInfo.dir.y = info->y;
 	delete info;
@@ -194,6 +195,7 @@ void DMRoom::UpdateCollider()
 				disVec = disVec.normalize();
 
 				/* 피격체의 콜라이더를 피격당한상태로 바꾸고, 밀려날 위치를 부여한다. */
+				chB._playerInfo.curState = EState::IDLE;
 				chB.GetHitCollider()._bAttacked = true;
 				chB.GetHitCollider()._attackedPos = Vector3d(
 					chB._playerInfo.pos.x + (chB._playerInfo.hitCount * chA.GetAttackCollider()._knockBackPower * disVec.x),
