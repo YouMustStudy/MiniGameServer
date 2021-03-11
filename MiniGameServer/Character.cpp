@@ -36,8 +36,8 @@ void Character::Update(float fTime)
 
 	case EState::DIE:
 	{
-		static const float DROP_SPEED = 1000.0f;
-		static const float DEATH_HEIGHT = -500.0f;
+		static const float DROP_SPEED = 10000.0f;
+		static const float DEATH_HEIGHT = -500.0f; // Á×´Â ³ôÀÌ
 		_playerInfo.dropSpeed += DROP_SPEED * fTime;
 		_playerInfo.pos.z -= _playerInfo.dropSpeed * fTime;
 		if (DEATH_HEIGHT >= _playerInfo.pos.z)
@@ -47,6 +47,7 @@ void Character::Update(float fTime)
 			_playerInfo.pos = Vector3d{ 0, 0, 0 };
 			_playerInfo.dropSpeed = 0.0f;
 			_playerInfo.hitCount = 1;
+			_hitColl._bAttacked = false;
 		}
 	}
 		break;
