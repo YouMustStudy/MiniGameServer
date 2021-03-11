@@ -156,17 +156,20 @@ void DMRoom::KnockBack(Character& character)
 
 	// 플레이어 현재 위치와 넉백 최종위치가 근접하면 콜라이더 넉백 종료
 	if (abs(pos.x - character.GetHitCollider()._attackedPos.x) <= 1.f &&
-		abs(pos.x - character.GetHitCollider()._attackedPos.x) <= 1.f)
+		abs(pos.y - character.GetHitCollider()._attackedPos.y) <= 1.f)
 	{
 		character.GetHitCollider()._bAttacked = false;
 	}
 
 	// 플레이어 현재 위치와 넉백 최종위치 보간 
-	character._playerInfo.pos = Vector3d::lerp(pos, character.GetHitCollider()._attackedPos, 10 * deltaTime);
+	Vector3d dst = Vector3d::lerp(pos, character.GetHitCollider()._attackedPos, 10 * deltaTime);
+	character._playerInfo.pos.x = dst.x;
+	character._playerInfo.pos.y = dst.y;
 }
 
 void DMRoom::UpdatePos(Character& character)
 {
+	//if(EState::IDLE == character.GetCurState())
 	character._playerInfo.pos += character._playerInfo.dir * character._playerInfo.moveSpeed * deltaTime;
 }
 
@@ -189,10 +192,20 @@ void DMRoom::UpdateCollider()
 				chB.GetHitCollider()._bAttacked = true;
 				chB.GetHitCollider()._attackedPos = Vector3d(
 					chB._playerInfo.pos.x + (chA.GetAttackCollider()._knockBackPower * disVec.x),
-					chB._playerInfo.pos.y + (chA.GetAttackCollider()._knockBackPower * disVec.x),
+					chB._playerInfo.pos.y + (chA.GetAttackCollider()._knockBackPower * disVec.y),
 					chB._playerInfo.pos.z
 				);
 			}
+		}
+	}
+
+	for (auto& ch : characterList) // 공격하는 플레이어
+	{
+		//맵 밖으로 벗어나면
+		if (false == CheckCollider(mapCollider, ch.GetHitCollider()))
+		{
+			ch._playerInfo.curState = EState::DIE;
+			ch.GetAttackCollider()._enabled = false;
 		}
 	}
 }
@@ -226,7 +239,7 @@ void DMRoom::SendGameState()
 	for (size_t i = 0; i < characterList.size(); ++i)
 	{
 		SC_PACKET_CHARACTER_INFO infoPacket{i, 
-			characterList[i]._playerInfo.pos.x, characterList[i]._playerInfo.pos.y,
+			characterList[i]._playerInfo.pos.x, characterList[i]._playerInfo.pos.y, characterList[i]._playerInfo.pos.z,
 			characterList[i]._playerInfo.dir.x, characterList[i]._playerInfo.dir.y};
 		infoData.EmplaceBack(&infoPacket, infoPacket.size);
 	}
