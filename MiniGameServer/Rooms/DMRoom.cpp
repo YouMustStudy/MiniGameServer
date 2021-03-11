@@ -65,7 +65,7 @@ void DMRoom::ProcessJob(Job job)
 		break;
 
 	case CS_MOVEDIR:
-		//Logger::Log("유저 디렉션 수신");
+		Logger::Log("유저 디렉션 수신 " + std::to_string(reinterpret_cast<MoveDirInfo*>(job.second)->uid));
 		ProcessMoveDir(reinterpret_cast<MoveDirInfo*>(job.second));
 		break;
 
@@ -157,7 +157,7 @@ void DMRoom::KnockBack(Character& character)
 	}
 
 	// 플레이어 현재 위치와 넉백 최종위치 보간 
-	character._playerInfo.pos = Vector3d::lerp(pos, character.GetHitCollider()._pos, 10 * deltaTime);
+	character._playerInfo.pos = Vector3d::lerp(pos, character.GetHitCollider()._attackedPos, 10 * deltaTime);
 }
 
 void DMRoom::UpdatePos(Character& character)
