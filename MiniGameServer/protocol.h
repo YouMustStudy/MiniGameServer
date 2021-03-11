@@ -224,13 +224,17 @@ public:
 class SC_PACKET_SPAWN_EFFECT : public DEFAULT_PACKET
 {
 public:
-	SC_PACKET_SPAWN_EFFECT(UID uid, int eid) : uid(uid), eid(eid)
+	SC_PACKET_SPAWN_EFFECT(UID uid, int eid, float x, float y, float z) : uid(uid), eid(eid)
 	{
 		size = sizeof(SC_PACKET_SPAWN_EFFECT);
 		type = SC_SPAWN_EFFECT;
+		pos[0] = x;
+		pos[1] = y;
+		pos[2] = z;
 	};
 	UID uid{};
 	int eid{};
+	float pos[3]{};
 };
 
 class CS_PACKET_REQUEST_LOGIN : public DEFAULT_PACKET

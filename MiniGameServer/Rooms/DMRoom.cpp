@@ -121,6 +121,10 @@ void DMRoom::ProcessAttack(UID uid)
 	if (EState::IDLE == characterList[uid]._playerInfo.curState
 		|| EState::MOVE == characterList[uid]._playerInfo.curState)
 	{
+		// 어택하면 일단 제자리
+		characterList[uid]._playerInfo.dir.x = 0;
+		characterList[uid]._playerInfo.dir.y = 0;
+
 		characterList[uid]._playerInfo.curState = EState::ATTACK_READY;
 		characterList[uid]._playerInfo.animTime = 0.0f;
 		//공격패킷 중계
@@ -132,6 +136,7 @@ void DMRoom::ProcessAttack(UID uid)
 void DMRoom::ProcessMoveDir(MoveDirInfo* info)
 {
 	if (nullptr == info) return;
+	if (characterList[info->uid]._playerInfo.curState == EState::ATTACK_READY) return; // 어택상태이면 클라로부터 컨트롤러값 안받음
 	characterList[info->uid]._playerInfo.dir.x = info->x;
 	characterList[info->uid]._playerInfo.dir.y = info->y;
 	delete info;
@@ -156,7 +161,7 @@ void DMRoom::KnockBack(Character& character)
 
 	// 플레이어 현재 위치와 넉백 최종위치가 근접하면 콜라이더 넉백 종료
 	if (abs(pos.x - character.GetHitCollider()._attackedPos.x) <= 1.f &&
-		abs(pos.x - character.GetHitCollider()._attackedPos.x) <= 1.f)
+		abs(pos.y - character.GetHitCollider()._attackedPos.y) <= 1.f)
 	{
 		character.GetHitCollider()._bAttacked = false;
 	}
@@ -189,11 +194,16 @@ void DMRoom::UpdateCollider()
 				chB.GetHitCollider()._bAttacked = true;
 				chB.GetHitCollider()._attackedPos = Vector3d(
 					chB._playerInfo.pos.x + (chA.GetAttackCollider()._knockBackPower * disVec.x),
-					chB._playerInfo.pos.y + (chA.GetAttackCollider()._knockBackPower * disVec.x),
+					chB._playerInfo.pos.y + (chA.GetAttackCollider()._knockBackPower * disVec.y),
 					chB._playerInfo.pos.z
 				);
+
+				// 이펙트 소환 패킷 중계
+				SC_PACKET_SPAWN_EFFECT effectPacket{0, (int)EObjectType::HitEffect, chB._playerInfo.pos.x, chB._playerInfo.pos.y, chB._playerInfo.pos.z};
+				eventData.EmplaceBack(&effectPacket, effectPacket.size);
 			}
 		}
+		chA.GetAttackCollider()._enabled = false;
 	}
 }
 

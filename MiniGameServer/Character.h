@@ -26,6 +26,13 @@ enum class ESpriteType : unsigned char {
 	TYPE_END
 };
 
+// 오브젝트 종류
+enum class EObjectType : unsigned char {
+	Player,
+	HitEffect,
+	TYPE_END
+};
+
 // 플레이어 정보
 struct FPlayerInfo {
 	int id{};							// 네트워크 id
