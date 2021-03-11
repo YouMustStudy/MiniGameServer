@@ -101,6 +101,9 @@ void UserManager::ProcessAccept(AcceptInfo* info)
 
 void UserManager::ProcessDisconnect(size_t idx)
 {
+	if (ST_QUEUE == userList[idx].state)
+		matchQueue.Dequeue(idx);
+
 	//유저 상태 전환 후
 	userList[idx].state = ST_DISCONN;
 
@@ -130,13 +133,13 @@ void UserManager::ProcessLogin(LoginInfo* info)
 	//DB 아이디, 비밀번호 검증
 
 	//중복 로그인 체크
-	if (0 != userIDSet.count(info->id))
+	/*if (0 != userIDSet.count(info->id))
 	{
 		Logger::Log("중복 로그인 시도");
 		SC_PACKET_LOGIN_FAIL packet(LOGIN_FAIL_SAME_ID);
 		MiniGameServer::Instance().SendPacket(&userList[reqUser], &packet);
 		return;
-	}
+	}*/
 
 	//로그인 OK!!
 	userList[reqUser].id = info->id;
@@ -159,7 +162,6 @@ void UserManager::ProcessEnqueue(size_t idx)
 		userList[idx].state = ST_QUEUE;
 		SC_PACKET_CHANGE_QUEUE packet{ true };
 		MiniGameServer::Instance().SendPacket(&userList[idx], &packet);
-		Logger::Log("매치큐 등록");
 
 		if (true == matchQueue.CanMakeMake())
 		{

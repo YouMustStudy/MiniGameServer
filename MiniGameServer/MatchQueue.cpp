@@ -1,4 +1,5 @@
 #include "MatchQueue.h"
+#include "Utills/Logger.h"
 
 void MatchQueue::Enqueue(size_t idx)
 {
@@ -6,6 +7,7 @@ void MatchQueue::Enqueue(size_t idx)
 	{
 		m_userQueue.emplace_back(idx);
 		m_idxMapper.emplace(idx, std::prev(m_userQueue.end()));
+		Logger::Log("매치큐 등록");
 	}
 }
 
@@ -15,6 +17,7 @@ void MatchQueue::Dequeue(size_t idx)
 	{
 		m_userQueue.erase(m_idxMapper[idx]);
 		m_idxMapper.erase(idx);
+		Logger::Log("매치큐 해제");
 	}
 }
 

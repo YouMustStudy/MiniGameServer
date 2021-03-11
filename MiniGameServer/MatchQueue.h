@@ -24,7 +24,7 @@ public:
 	bool MatchMake(std::vector<size_t>& users);
 
 private:
-	size_t	m_matchNum{1};		// 매치가 성립하는 인원 수
+	size_t	m_matchNum{2};		// 매치가 성립하는 인원 수
 	IdxMapper m_idxMapper;		// 유저 인덱스 + 큐의 iterator 매핑 테이블
 	UserQueue m_userQueue;		// 실제 유저 대기열
 };

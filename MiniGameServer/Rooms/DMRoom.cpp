@@ -60,7 +60,7 @@ void DMRoom::ProcessJob(Job job)
 		break;
 
 	case CS_ATTACK:
-		Logger::Log("유저 공격 수신" + std::to_string(reinterpret_cast<UID>(job.second)));
+		Logger::Log("유저 공격 수신 " + std::to_string(reinterpret_cast<UID>(job.second)));
 		ProcessAttack(reinterpret_cast<UID>(job.second));
 		break;
 
