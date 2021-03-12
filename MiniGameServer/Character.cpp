@@ -1,8 +1,10 @@
 #include "Character.h"
+#include "Rooms/DMRoom.h"
 
-Character::Character()
+Character::Character(size_t id, DMRoom* roomPtr)
 	:_hitColl(0.0f, 0.0f, 100.f, 100.f, Vector3d(0.0, 0.0, 0.0)),
-	_attackColl(200.0f, 3.0f, 200.f, 100.f, Vector3d(0.0, 0.0, 0.0))
+	_attackColl(200.0f, 3.0f, 200.f, 100.f, Vector3d(0.0, 0.0, 0.0)),
+	id(id), roomPtr(roomPtr)
 {
 }
 
@@ -38,16 +40,26 @@ void Character::Update(float fTime)
 	{
 		static const float DROP_SPEED = 10000.0f;
 		static const float DEATH_HEIGHT = -500.0f; // 죽는 높이
+
 		_playerInfo.dropSpeed += DROP_SPEED * fTime;
 		_playerInfo.pos.z -= _playerInfo.dropSpeed * fTime;
 		if (DEATH_HEIGHT >= _playerInfo.pos.z)
 		{
+			//차후 리스폰으로 분할
 			//일정 높이 이하로 낙하했으면 리스폰.
 			_playerInfo.curState = EState::IDLE;
 			_playerInfo.pos = Vector3d{ 0, 0, 0 };
 			_playerInfo.dropSpeed = 0.0f;
 			_playerInfo.hitCount = 1;
 			_hitColl._bAttacked = false;
+
+			//체력 감소 패킷
+			if (nullptr != roomPtr)
+			{
+				_playerInfo.hp = _playerInfo.hpm;
+				SC_PACKET_CHANGE_HP changeHPPacket{ id ,_playerInfo.hp };
+				roomPtr->eventData.EmplaceBack(&changeHPPacket, changeHPPacket.size);
+			}
 		}
 	}
 		break;

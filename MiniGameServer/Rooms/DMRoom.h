@@ -35,6 +35,8 @@ constexpr float MAP_WIDTH = 1000.0f;
 constexpr float MAP_HEIGHT = 1000.0f;
 class DMRoom : public LockFreeQueue
 {
+	friend Character;
+
 public:
 	DMRoom();
 	virtual ~DMRoom();
@@ -65,6 +67,7 @@ private:
 	PacketVector infoData;  //전송될 위치정보 패킷
 	bool isEnd{false};		//게임이 끝났는가?
 	float deltaTime{};		//매 틱 변한 시간
+	float leftTime{};		//남은 게임 시간
 
 	//실제 게임 처리
 	void ProcessAttack(UID uid);

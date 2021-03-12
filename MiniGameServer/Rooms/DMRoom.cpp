@@ -32,12 +32,10 @@ void DMRoom::Regist(std::vector<User*> users)
 		{
 			users[i]->roomPtr = this;
 			userList.emplace_back(users[i]);
-			characterList.emplace_back();
-			characterList.back().id = i;
+			characterList.emplace_back(i, this);
 
 			SC_PACKET_SPAWN_CHARACTER spawnCharacterPacket { i, 0, 0, 0 };
 			eventData.EmplaceBack(&spawnCharacterPacket, spawnCharacterPacket.size);
-
 			SC_PACKET_UID packet{ i };
 			MiniGameServer::Instance().SendPacket(users[i], &packet);
 		}
@@ -60,12 +58,12 @@ void DMRoom::ProcessJob(Job job)
 		break;
 
 	case CS_ATTACK:
-		Logger::Log("유저 공격 수신 " + std::to_string(reinterpret_cast<UID>(job.second)));
+		//Logger::Log("유저 공격 수신 " + std::to_string(reinterpret_cast<UID>(job.second)));
 		ProcessAttack(reinterpret_cast<UID>(job.second));
 		break;
 
 	case CS_MOVEDIR:
-		Logger::Log("유저 디렉션 수신 " + std::to_string(reinterpret_cast<MoveDirInfo*>(job.second)->uid));
+		//Logger::Log("유저 디렉션 수신 " + std::to_string(reinterpret_cast<MoveDirInfo*>(job.second)->uid));
 		ProcessMoveDir(reinterpret_cast<MoveDirInfo*>(job.second));
 		break;
 
@@ -78,6 +76,7 @@ void DMRoom::ProcessJob(Job job)
 void DMRoom::Disconnect(User* user)
 {
 	//유저를 룸에서 삭제 및 유저 매니저에 통보.
+	//실패시는 무통보.
 	if (nullptr != user)
 	{
 		auto iter = std::find(userList.begin(), userList.end(), user);
@@ -103,7 +102,6 @@ void DMRoom::Update()
 
 	isEnd = GameLogic();
 	SendGameState();
-	//Logger::Log("방 업데이트 수행 - " + std::to_string(deltaTime) + "ms");
 	if (true == isEnd)
 	{
 		End();
@@ -121,6 +119,7 @@ void DMRoom::ProcessAttack(UID uid)
 	if (EState::IDLE == characterList[uid]._playerInfo.curState
 		|| EState::MOVE == characterList[uid]._playerInfo.curState)
 	{
+		// 기존에 날라가던걸 덮어씌우지는 않는가?
 		// 대쉬 앵커
 		characterList[uid]._hitColl._attackedPos = Vector3d(
 			characterList[uid]._playerInfo.pos.x + characterList[uid]._playerInfo.dir.x * characterList[uid]._playerInfo.moveSpeed * deltaTime * 25.f,
@@ -203,7 +202,7 @@ void DMRoom::UpdateCollider()
 				disVec = disVec.normalize();
 
 				/* 피격체의 콜라이더를 피격당한상태로 바꾸고, 밀려날 위치를 부여한다. */
-				chB._playerInfo.curState = EState::IDLE;
+				chB._playerInfo.curState = EState::IDLE;		//문제 있음 -> 이때 공격패킷오면 바로 반격 가능
 				chB.GetHitCollider()._bAttacked = true;
 				chB.GetHitCollider()._attackedPos = Vector3d(
 					chB._playerInfo.pos.x + (chB._playerInfo.hitCount * chA.GetAttackCollider()._knockBackPower * disVec.x),
@@ -233,11 +232,6 @@ void DMRoom::UpdateCollider()
 		{
 			ch._playerInfo.curState = EState::DIE;
 			ch.GetAttackCollider()._enabled = false;
-
-			//체력 감소 패킷
-			ch._playerInfo.hp = ch._playerInfo.hpm;
-			SC_PACKET_CHANGE_HP changeHPPacket{ ch.id ,ch._playerInfo.hp };
-			eventData.EmplaceBack(&changeHPPacket, changeHPPacket.size);
 		}
 	}
 }

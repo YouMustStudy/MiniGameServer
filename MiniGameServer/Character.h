@@ -35,20 +35,20 @@ enum class EObjectType : unsigned char {
 
 // 플레이어 정보
 struct FPlayerInfo {
-		int id{};							// 네트워크 id
+		int id{};						// 네트워크 id
 		Vector3d pos{};					//x좌표
 		Vector3d dir{};					//방향
 		int hp{3};						//체력
 		int hpm{3};						//최대체력
-		float attackPower{};				//공격력
-		float moveSpeed{1000.0f};			//이동속도
+		float attackPower{};			//공격력
+		float moveSpeed{1000.0f};		//이동속도
 		float dropSpeed{0.0f};
 		bool bFlipX{};					//true 왼쪽 바라보는상태
 		int hitCount{1};
-		ESpriteType	sprite{};				//sprite 종류
+		ESpriteType	sprite{};			//sprite 종류
 		EState		curState{};			//현재 상태
 		float animTime{0.0f};
-		EWeaponType 	curWeapon{};		// 현재 무기
+		EWeaponType 	curWeapon{};	// 현재 무기
 };
 
 // 콜라이더. 캐릭터는 attack(공격전용), hit(피격전용) 두 종류를 가지고 있다.
@@ -82,11 +82,12 @@ struct Collider {
 };
 
 /*플레이어*/
+class DMRoom;
 class Character
 {
 
 public:
-	Character();
+	Character(size_t id, DMRoom* roomPtr);
 
 public:
 	// 캐릭터 현재 상태 얻기
@@ -114,6 +115,7 @@ public:
 	Collider _hitColl;			// 피격 콜라이더
 	Collider _attackColl;		// 공격 콜라이더
 	size_t id{};
+	DMRoom* roomPtr{nullptr};
 
 	bool operator==(const Character& other) { return id == other.id; };
 	void Update(float fTime);
