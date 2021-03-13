@@ -12,9 +12,10 @@ enum SC_PACKET
 
 	//Game
 	SC_UID,						///< 유저에게 게임 UID 전송
+	SC_TIME,					///< 서버/클라 시간 동기화
 	SC_SPAWN_CHARACTER,			///< 캐릭터 오브젝트 추가
 	SC_DESTROY_CHARACTER,		///< 캐릭터 오브젝트 삭제
-	SC_ATTACK,				///< 캐릭터 공격
+	SC_ATTACK,					///< 캐릭터 공격
 	SC_GET_ITEM,				///< 캐릭터 아이템 획득
 	SC_CHANGE_HP,				///< 캐릭터 체력 변경
 	SC_CHANGE_SCORE,			///< 캐릭터 스코어 변경
@@ -138,6 +139,17 @@ public:
 		type = SC_UID;
 	};
 	UID uid;
+};
+
+class SC_PACKET_TIME : public DEFAULT_PACKET
+{
+public:
+	SC_PACKET_TIME(unsigned int time) : time(time)
+	{
+		size = sizeof(SC_PACKET_TIME);
+		type = SC_TIME;
+	};
+	unsigned int time;
 };
 
 class SC_PACKET_SPAWN_CHARACTER : public DEFAULT_PACKET

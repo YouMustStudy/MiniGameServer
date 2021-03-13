@@ -5,6 +5,7 @@
 #include <DirectXCollision.h>
 #include <atomic>
 #include <vector>
+#include <random>
 #include "..\Common\PacketVector.h"
 #include "..\LockFreeQueue.h"
 #include "..\Character.h"
@@ -51,8 +52,10 @@ protected:
 	virtual void ProcessJob(Job job) override;
 
 private:
-	bool GameLogic();
+	void GameLogic();
 	void SendGameState();
+	bool EndCheck();
+	void QuitAllUser();
 
 	void Disconnect(User* user);
 	void End();
@@ -67,12 +70,15 @@ private:
 	PacketVector infoData;  //전송될 위치정보 패킷
 	bool isEnd{false};		//게임이 끝났는가?
 	float deltaTime{};		//매 틱 변한 시간
-	float leftTime{};		//남은 게임 시간
+
+	static constexpr float DEFAULT_MATCH_TIME = 5.0f;
+	float leftTime{ DEFAULT_MATCH_TIME };		//남은 게임 시간
 
 	//실제 게임 처리
 	void ProcessAttack(UID uid);
 	void ProcessMoveDir(MoveDirInfo* info);
 
+	void UpdateLeftTime();
 	void UpdatePosition();
 	void KnockBack(Character& character);
 	void UpdatePos(Character& character);
@@ -82,5 +88,7 @@ private:
 	std::vector<Character> characterList{};	//플레이하는 '캐릭터' 컨테이너
 	std::vector<User*> userList{};			//플레이중인 '유저' 컨테이너
 
-	Collider mapCollider{ 0, 0, MAP_WIDTH, MAP_HEIGHT, {0, 0, 0} };
+	Collider mapCollider{ 0, 0, MAP_WIDTH, MAP_HEIGHT, {0, 0, 0} };	//맵의 충돌객체, 낙사 판정 시 사용
+	std::mt19937_64 randomEngine;
+	std::uniform_real_distribution<float> randomRange{-1.0f, 1.0f};
 };

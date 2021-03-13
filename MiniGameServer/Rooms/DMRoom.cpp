@@ -8,6 +8,8 @@
 
 DMRoom::DMRoom()
 {
+	std::random_device rd;
+	randomEngine.seed(rd());
 }
 
 DMRoom::~DMRoom()
@@ -21,6 +23,7 @@ void DMRoom::Init()
 	userList.clear();
 	eventData.Clear();
 	infoData.Clear();
+	leftTime = DEFAULT_MATCH_TIME;
 }
 
 void DMRoom::Regist(std::vector<User*> users)
@@ -92,6 +95,8 @@ void DMRoom::Disconnect(User* user)
 void DMRoom::End()
 {
 	//유저 종료처리 및 룸 매니저에 통보
+	//마지막 스코어처리도 이곳에서?
+	QuitAllUser();
 	RoomManager::Instance().PushJob(RMGR_DESTROY, reinterpret_cast<void*>(queueType.second));
 }
 
@@ -100,8 +105,9 @@ void DMRoom::Update()
 	currentUpdateTime = std::chrono::high_resolution_clock::now();
 	deltaTime = std::chrono::duration<float>(currentUpdateTime - lastUpdateTime).count();
 
-	isEnd = GameLogic();
+	GameLogic();
 	SendGameState();
+	isEnd = EndCheck();
 	if (true == isEnd)
 	{
 		End();
@@ -150,6 +156,23 @@ void DMRoom::ProcessMoveDir(MoveDirInfo* info)
 	delete info;
 }
 
+void DMRoom::UpdateLeftTime()
+{
+	float oldTime = leftTime;
+	leftTime -= deltaTime;
+	//1초단위로 클라/서버 간 남은 시간 동기화
+	if (1.0f <= oldTime)
+	{
+		unsigned int oldSecTime = static_cast<int>(oldTime);
+		unsigned int curSecTime = static_cast<int>(leftTime);
+		if (curSecTime != oldSecTime)
+		{
+			SC_PACKET_TIME timePacket{ curSecTime };
+			eventData.EmplaceBack(&timePacket, timePacket.size);
+		}
+	}
+}
+
 void DMRoom::UpdatePosition()
 {
 	for (auto& character : characterList)
@@ -174,7 +197,7 @@ void DMRoom::KnockBack(Character& character)
 		character.GetHitCollider()._bAttacked = false;
 	}
 
-	// 플레이어 현재 위치와 넉백 최종위치 보간 
+	// 플레이어 현재 위치와 넉백 최종위치 보간, Z는 낙하를 위해 제외.
 	Vector3d dst = Vector3d::lerp(pos, character.GetHitCollider()._attackedPos, 10 * deltaTime);
 	character._playerInfo.pos.x = dst.x;
 	character._playerInfo.pos.y = dst.y;
@@ -182,7 +205,6 @@ void DMRoom::KnockBack(Character& character)
 
 void DMRoom::UpdatePos(Character& character)
 {
-	//if(EState::IDLE == character.GetCurState())
 	character._playerInfo.pos += character._playerInfo.dir * character._playerInfo.moveSpeed * deltaTime;
 }
 
@@ -199,6 +221,12 @@ void DMRoom::UpdateCollider()
 			{
 				/* 피격체가 밀려나갈 방향 구하기 */
 				Vector3d disVec = chB._playerInfo.pos - chA._playerInfo.pos;
+				//위치가 동일하다면 랜덤한 위치로 튀도록 벡터 난수생성.
+				while (true == disVec.isZero())
+				{
+					disVec.x = randomRange(randomEngine);
+					disVec.y = randomRange(randomEngine);
+				}
 				disVec = disVec.normalize();
 
 				/* 피격체의 콜라이더를 피격당한상태로 바꾸고, 밀려날 위치를 부여한다. */
@@ -227,7 +255,7 @@ void DMRoom::UpdateCollider()
 
 	for (auto& ch : characterList) // 공격하는 플레이어
 	{
-		//맵 밖으로 벗어나면
+		//맵 밖으로 벗어나면 사망처리
 		if (false == CheckCollider(mapCollider, ch.GetHitCollider()))
 		{
 			ch._playerInfo.curState = EState::DIE;
@@ -248,15 +276,11 @@ void DMRoom::SetQueueType(QueueType queType)
 	queueType = queType;
 }
 
-bool DMRoom::GameLogic()
+void DMRoom::GameLogic()
 {
+	UpdateLeftTime();
 	UpdatePosition();
 	UpdateCollider();
-
-	if (true == userList.empty())
-		return true;
-
-	return false;
 }
 
 void DMRoom::SendGameState()
@@ -275,6 +299,33 @@ void DMRoom::SendGameState()
 	for (auto& user : userList)
 		MiniGameServer::Instance().SendPacket(user, eventData.data, eventData.len);
 
+	//이후 초기화
 	eventData.Clear();
 	infoData.Clear();
+}
+
+bool DMRoom::EndCheck()
+{
+	//제한시간이 다 소모되면 게임 종료
+	if (0 >= leftTime)
+	{
+		Logger::Log("룸 타임아웃, 매치 종료");
+		return true;
+	}
+		
+	//유저가 모두 접속을 종료하면 게임 종료
+	if (true == userList.empty())
+	{
+		Logger::Log("남은 유저 수 0, 매치 종료");
+		return true;
+	}
+
+	return false;
+}
+
+void DMRoom::QuitAllUser()
+{
+	//벡터인데 앞부분부터 삭제함. 일단 있는 함수를 활용하지만 이후 개선 필요
+	for (auto& user : userList)
+		Disconnect(user);
 }
