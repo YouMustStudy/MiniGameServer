@@ -80,15 +80,13 @@ private:
 
 	void UpdateLeftTime();
 	void UpdatePosition();
-	void KnockBack(Character& character);
-	void UpdatePos(Character& character);
 	void UpdateCollider();
-	bool CheckCollider(Collider& a, Collider& b);
+	bool CheckCollider(const Collider& a, const Collider& b);
 
 	std::vector<Character> characterList{};	//플레이하는 '캐릭터' 컨테이너
 	std::vector<User*> userList{};			//플레이중인 '유저' 컨테이너
 
-	Collider mapCollider{ 0, 0, MAP_WIDTH, MAP_HEIGHT, {0, 0, 0} };	//맵의 충돌객체, 낙사 판정 시 사용
+	Collider mapCollider{MAP_WIDTH, MAP_HEIGHT, {0, 0, 0} };	//맵의 충돌객체, 낙사 판정 시 사용
 	std::mt19937_64 randomEngine;
 	std::uniform_real_distribution<float> randomRange{-1.0f, 1.0f};
 };

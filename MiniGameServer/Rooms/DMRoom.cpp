@@ -26,28 +26,6 @@ void DMRoom::Init()
 	leftTime = DEFAULT_MATCH_TIME;
 }
 
-void DMRoom::Regist(std::vector<User*> users)
-{
-	//유저 등록 처리, UID도 전송.
-	for (size_t i = 0; i < users.size(); ++i)
-	{
-		if (nullptr != users[i])
-		{
-			users[i]->roomPtr = this;
-			userList.emplace_back(users[i]);
-			characterList.emplace_back(i, this);
-
-			SC_PACKET_SPAWN_CHARACTER spawnCharacterPacket { i, 0, 0, 0 };
-			eventData.EmplaceBack(&spawnCharacterPacket, spawnCharacterPacket.size);
-			SC_PACKET_UID packet{ i };
-			MiniGameServer::Instance().SendPacket(users[i], &packet);
-		}
-	}
-	SC_PACKET_CHANGE_SCENE changeScenePacket{ SCENE_GAME };
-	eventData.EmplaceBack(&changeScenePacket, changeScenePacket.size);
-	return;
-}
-
 void DMRoom::ProcessJob(Job job)
 {
 	switch (job.first)
@@ -74,50 +52,6 @@ void DMRoom::ProcessJob(Job job)
 		Logger::Log("처리되지 않은 룸 잡 발견");
 		break;
 	}
-}
-
-void DMRoom::Disconnect(User* user)
-{
-	//유저를 룸에서 삭제 및 유저 매니저에 통보.
-	//실패시는 무통보.
-	if (nullptr != user)
-	{
-		auto iter = std::find(userList.begin(), userList.end(), user);
-		if (iter != userList.end())
-		{
-			user->roomPtr = nullptr;
-			userList.erase(iter);
-			UserManager::Instance().PushJob(USER_LEAVEROOM, reinterpret_cast<void*>(user->uid));
-		}
-	}
-}
-
-void DMRoom::End()
-{
-	//유저 종료처리 및 룸 매니저에 통보
-	//마지막 스코어처리도 이곳에서?
-	QuitAllUser();
-	RoomManager::Instance().PushJob(RMGR_DESTROY, reinterpret_cast<void*>(queueType.second));
-}
-
-void DMRoom::Update()
-{
-	currentUpdateTime = std::chrono::high_resolution_clock::now();
-	deltaTime = std::chrono::duration<float>(currentUpdateTime - lastUpdateTime).count();
-
-	GameLogic();
-	SendGameState();
-	isEnd = EndCheck();
-	if (true == isEnd)
-	{
-		End();
-		Logger::Log("매치 종료, 룸 매니저에 삭제 요청");
-	}
-	else
-	{
-		MiniGameServer::Instance().AddEvent(queueType.second, EV_UPDATE, lastUpdateTime + std::chrono::milliseconds(UPDATE_INTERVAL));
-	}
-	lastUpdateTime = currentUpdateTime;
 }
 
 void DMRoom::ProcessAttack(UID uid)
@@ -176,36 +110,7 @@ void DMRoom::UpdateLeftTime()
 void DMRoom::UpdatePosition()
 {
 	for (auto& character : characterList)
-	{
 		character.Update(deltaTime);
-		if (true == character.GetHitCollider()._bAttacked)
-			KnockBack(character);
-		else
-			UpdatePos(character);
-	}
-}
-
-void DMRoom::KnockBack(Character& character)
-{
-	// 플레이어 현재 위치 받아오기
-	Vector3d pos = character._playerInfo.pos;
-
-	// 플레이어 현재 위치와 넉백 최종위치가 근접하면 콜라이더 넉백 종료
-	if (abs(pos.x - character.GetHitCollider()._attackedPos.x) <= 1.f &&
-		abs(pos.y - character.GetHitCollider()._attackedPos.y) <= 1.f)
-	{
-		character.GetHitCollider()._bAttacked = false;
-	}
-
-	// 플레이어 현재 위치와 넉백 최종위치 보간, Z는 낙하를 위해 제외.
-	Vector3d dst = Vector3d::lerp(pos, character.GetHitCollider()._attackedPos, 10 * deltaTime);
-	character._playerInfo.pos.x = dst.x;
-	character._playerInfo.pos.y = dst.y;
-}
-
-void DMRoom::UpdatePos(Character& character)
-{
-	character._playerInfo.pos += character._playerInfo.dir * character._playerInfo.moveSpeed * deltaTime;
 }
 
 void DMRoom::UpdateCollider()
@@ -217,10 +122,11 @@ void DMRoom::UpdateCollider()
 		for (auto& chB : characterList)	// 맞는 플레이어
 		{
 			if (chA == chB) continue;	// 내 자신은 공격 못한다.
-			if (CheckCollider(chA.GetAttackCollider(), chB.GetHitCollider())) // AttackColl, HitColl 충돌 체크
+			if (true == CheckCollider(chA.GetAttackCollider(), chB.GetHitCollider())) // AttackColl, HitColl 충돌 체크
 			{
 				/* 피격체가 밀려나갈 방향 구하기 */
 				Vector3d disVec = chB._playerInfo.pos - chA._playerInfo.pos;
+
 				//위치가 동일하다면 랜덤한 위치로 튀도록 벡터 난수생성.
 				while (true == disVec.isZero())
 				{
@@ -231,19 +137,15 @@ void DMRoom::UpdateCollider()
 
 				/* 피격체의 콜라이더를 피격당한상태로 바꾸고, 밀려날 위치를 부여한다. */
 				chB._playerInfo.curState = EState::IDLE;		//문제 있음 -> 이때 공격패킷오면 바로 반격 가능
+				chB.GetDamage(1);
+
+				//넉백 위치 부여
 				chB.GetHitCollider()._bAttacked = true;
 				chB.GetHitCollider()._attackedPos = Vector3d(
-					chB._playerInfo.pos.x + (chB._playerInfo.hitCount * chA.GetAttackCollider()._knockBackPower * disVec.x),
-					chB._playerInfo.pos.y + (chB._playerInfo.hitCount * chA.GetAttackCollider()._knockBackPower * disVec.y),
+					chB._playerInfo.pos.x + (chB._playerInfo.hitCount[chB._playerInfo.hp] * chA._playerInfo.attackPower * disVec.x),
+					chB._playerInfo.pos.y + (chB._playerInfo.hitCount[chB._playerInfo.hp] * chA._playerInfo.attackPower * disVec.y),
 					chB._playerInfo.pos.z
 				);
-				++chB._playerInfo.hitCount;
-				if(chB._playerInfo.hp > 0)
-					--chB._playerInfo.hp;
-
-				//체력 감소 패킷
-				SC_PACKET_CHANGE_HP changeHPPacket{ chB.id ,chB._playerInfo.hp };
-				eventData.EmplaceBack(&changeHPPacket, changeHPPacket.size);
 
 				// 이펙트 소환 패킷 중계
 				SC_PACKET_SPAWN_EFFECT effectPacket{0, (int)EObjectType::HitEffect, chB._playerInfo.pos.x, chB._playerInfo.pos.y, chB._playerInfo.pos.z};
@@ -264,11 +166,31 @@ void DMRoom::UpdateCollider()
 	}
 }
 
-bool DMRoom::CheckCollider(Collider& a, Collider& b)
+bool DMRoom::CheckCollider(const Collider& a, const Collider& b)
 {
 	if (a.GetMaxX() < b.GetMinX() || a.GetMinX() > b.GetMaxX()) return false;
 	if (a.GetMaxY() < b.GetMinY() || a.GetMinY() > b.GetMaxY()) return false;
 	return true;
+}
+
+void DMRoom::Update()
+{
+	currentUpdateTime = std::chrono::high_resolution_clock::now();
+	deltaTime = std::chrono::duration<float>(currentUpdateTime - lastUpdateTime).count();
+
+	GameLogic();
+	SendGameState();
+	isEnd = EndCheck();
+	if (true == isEnd)
+	{
+		End();
+		Logger::Log("매치 종료, 룸 매니저에 삭제 요청");
+	}
+	else
+	{
+		MiniGameServer::Instance().AddEvent(queueType.second, EV_UPDATE, lastUpdateTime + std::chrono::milliseconds(UPDATE_INTERVAL));
+	}
+	lastUpdateTime = currentUpdateTime;
 }
 
 void DMRoom::SetQueueType(QueueType queType)
@@ -302,6 +224,52 @@ void DMRoom::SendGameState()
 	//이후 초기화
 	eventData.Clear();
 	infoData.Clear();
+}
+
+void DMRoom::Regist(std::vector<User*> users)
+{
+	//유저 등록 처리, UID도 전송.
+	for (size_t i = 0; i < users.size(); ++i)
+	{
+		if (nullptr != users[i])
+		{
+			users[i]->roomPtr = this;
+			userList.emplace_back(users[i]);
+			characterList.emplace_back(i, this);
+
+			SC_PACKET_SPAWN_CHARACTER spawnCharacterPacket{ i, 0, 0, 0 };
+			eventData.EmplaceBack(&spawnCharacterPacket, spawnCharacterPacket.size);
+			SC_PACKET_UID packet{ i };
+			MiniGameServer::Instance().SendPacket(users[i], &packet);
+		}
+	}
+	SC_PACKET_CHANGE_SCENE changeScenePacket{ SCENE_GAME };
+	eventData.EmplaceBack(&changeScenePacket, changeScenePacket.size);
+	return;
+}
+
+void DMRoom::Disconnect(User* user)
+{
+	//유저를 룸에서 삭제 및 유저 매니저에 통보.
+	//실패시는 무통보.
+	if (nullptr != user)
+	{
+		auto iter = std::find(userList.begin(), userList.end(), user);
+		if (iter != userList.end())
+		{
+			user->roomPtr = nullptr;
+			userList.erase(iter);
+			UserManager::Instance().PushJob(USER_LEAVEROOM, reinterpret_cast<void*>(user->uid));
+		}
+	}
+}
+
+void DMRoom::End()
+{
+	//유저 종료처리 및 룸 매니저에 통보
+	//마지막 스코어처리도 이곳에서?
+	QuitAllUser();
+	RoomManager::Instance().PushJob(RMGR_DESTROY, reinterpret_cast<void*>(queueType.second));
 }
 
 bool DMRoom::EndCheck()

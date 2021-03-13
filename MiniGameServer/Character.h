@@ -38,17 +38,22 @@ struct FPlayerInfo {
 		int id{};						// 네트워크 id
 		Vector3d pos{};					//x좌표
 		Vector3d dir{};					//방향
-		int hp{3};						//체력
-		int hpm{3};						//최대체력
-		float attackPower{};			//공격력
+
+		int life{ 3 };										//목숨
+		int hp{3};											//체력
+		int hpm{3};											//최대체력
+		float hitCount[3]{ 1.0f, 3.0f, 10.0f };				//밀려날 가중치
+
+		float attackPower{200.0f};		//공격력
 		float moveSpeed{1000.0f};		//이동속도
 		float dropSpeed{0.0f};
-		bool bFlipX{};					//true 왼쪽 바라보는상태
-		int hitCount{1};
+
+		
 		ESpriteType	sprite{};			//sprite 종류
+		EWeaponType 	curWeapon{};	// 현재 무기
 		EState		curState{};			//현재 상태
 		float animTime{0.0f};
-		EWeaponType 	curWeapon{};	// 현재 무기
+		
 };
 
 // 콜라이더. 캐릭터는 attack(공격전용), hit(피격전용) 두 종류를 가지고 있다.
@@ -58,34 +63,26 @@ struct Collider {
 	float	_width{};						// 콜라이더 범위
 	float	_height{};
 
-	float _knockBackPower{};				// 넉백 힘	(AttackCollider 전용)
-	float _attackPower{};					// 공격력	(AttackCollider 전용)
-
 	bool	_bAttacked{false};				// 공격 당한 상태 (HitCollider 전용)
 	Vector3d _attackedPos{0, 0, 0};			// 밀려나서 가야할 위치 + 대쉬 위치 (HitCollider 전용)
 
-	Collider() {}
-
-	Collider(float knockBackPower, float attackPower, float width, float height, Vector3d pos)
+	Collider(float width, float height, Vector3d pos)
 	{
-		_knockBackPower = knockBackPower;
-		_attackPower = attackPower;
 		_pos = pos;
 		_width = width;
 		_height = height;
 	}
 
-	float GetMinX() { return _pos.x - _width; }
-	float GetMaxX() { return _pos.x + _width; }
-	float GetMinY() { return _pos.y - _height; }
-	float GetMaxY() { return _pos.y + _height; }
+	float GetMinX() const { return _pos.x - _width; }
+	float GetMaxX() const { return _pos.x + _width; }
+	float GetMinY() const { return _pos.y - _height; }
+	float GetMaxY() const { return _pos.y + _height; }
 };
 
 /*플레이어*/
 class DMRoom;
 class Character
 {
-
 public:
 	Character(size_t id, DMRoom* roomPtr);
 
@@ -104,6 +101,7 @@ public:
 		_attackColl._pos = _playerInfo.pos;
 		return _attackColl;
 	};
+
 	// 피격 콜라이더 얻기
 	Collider& GetHitCollider() {
 		_hitColl._pos = _playerInfo.pos;
@@ -119,4 +117,11 @@ public:
 
 	bool operator==(const Character& other) { return id == other.id; };
 	void Update(float fTime);
+	void GetDamage(int damage);
+
+private:
+	void KnockBack(float fTime);
+	void UpdatePos(float fTime);
+	void UpdateState(float fTime);
+	void ChangeHP(int hp);
 };
