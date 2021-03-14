@@ -135,17 +135,17 @@ void DMRoom::UpdateCollider()
 				}
 				disVec = disVec.normalize();
 
-				/* 피격체의 콜라이더를 피격당한상태로 바꾸고, 밀려날 위치를 부여한다. */
-				chB._playerInfo.curState = EState::IDLE;		//문제 있음 -> 이때 공격패킷오면 바로 반격 가능
-				chB.GetDamage(1);
-
 				//넉백 위치 부여
 				chB.GetHitCollider()._bAttacked = true;
 				chB.GetHitCollider()._attackedPos = Vector3d(
-					chB._playerInfo.pos.x + (chB._playerInfo.hitCount[chB._playerInfo.hp] * chA._playerInfo.attackPower * disVec.x),
-					chB._playerInfo.pos.y + (chB._playerInfo.hitCount[chB._playerInfo.hp] * chA._playerInfo.attackPower * disVec.y),
+					chB._playerInfo.pos.x + (chB._playerInfo.hitCount[chB._playerInfo.hpm - chB._playerInfo.hp] * chA._playerInfo.attackPower * disVec.x),
+					chB._playerInfo.pos.y + (chB._playerInfo.hitCount[chB._playerInfo.hpm - chB._playerInfo.hp] * chA._playerInfo.attackPower * disVec.y),
 					chB._playerInfo.pos.z
 				);
+
+				/* 피격체의 콜라이더를 피격당한상태로 바꾸고, 밀려날 위치를 부여한다. */
+				chB._playerInfo.curState = EState::IDLE;		//문제 있음 -> 이때 공격패킷오면 바로 반격 가능
+				chB.GetDamage(1);
 
 				// 이펙트 소환 패킷 중계
 				SC_PACKET_SPAWN_EFFECT effectPacket{0, (int)EObjectType::HitEffect, chB._playerInfo.pos.x, chB._playerInfo.pos.y, chB._playerInfo.pos.z};

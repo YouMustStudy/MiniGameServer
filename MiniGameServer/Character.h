@@ -112,7 +112,7 @@ public:
 	FPlayerInfo _playerInfo;	// 플레이어 정보
 	Collider _hitColl;			// 피격 콜라이더
 	Collider _attackColl;		// 공격 콜라이더
-	size_t id{};
+	size_t id{(size_t)-1};
 	DMRoom* roomPtr{nullptr};
 
 	bool operator==(const Character& other) { return id == other.id; };
