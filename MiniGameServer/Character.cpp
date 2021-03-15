@@ -97,7 +97,7 @@ void Character::UpdateState(float fTime)
 		{
 			_hitColl._bAttacked = false;
 			_playerInfo.curState = EState::IDLE;
-			_playerInfo.pos = Vector3d{ 0, 0, 0 };
+			_playerInfo.pos = _playerInfo.initialPos;
 			_playerInfo.animTime = 0.0f;
 			ChangeHP(_playerInfo.hpm);
 			SC_PACKET_CHARACTER_INFO teleportPacket{ id,

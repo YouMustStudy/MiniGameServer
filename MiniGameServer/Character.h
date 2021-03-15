@@ -39,6 +39,7 @@ enum class EObjectType : unsigned char {
 struct FPlayerInfo {
 		int id{};						// 匙飘况农 id
 		Vector3d pos{};					//x谅钎
+		Vector3d initialPos{};
 		Vector3d dir{};					//规氢
 
 		int life{ 3 };										//格见

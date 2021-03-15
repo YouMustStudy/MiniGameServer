@@ -241,6 +241,9 @@ void DMRoom::Regist(std::vector<User*> users)
 			userList.emplace_back(users[i]);
 			characterList.emplace_back(i, this);
 
+			characterList[i]._playerInfo.initialPos = initialPos[i % _countof(initialPos)];
+			characterList[i]._playerInfo.pos = characterList[i]._playerInfo.initialPos;
+			
 			SC_PACKET_SPAWN_CHARACTER spawnCharacterPacket{ i, 0, 0, 0 };
 			eventData.EmplaceBack(&spawnCharacterPacket, spawnCharacterPacket.size);
 			SC_PACKET_UID packet{ i };
