@@ -137,9 +137,18 @@ void DMRoom::UpdateCollider()
 
 				//넉백 위치 부여
 				chB.GetHitCollider()._bAttacked = true;
+
+				//하트버전
+				//chB.GetHitCollider()._attackedPos = Vector3d(
+				//	chB._playerInfo.pos.x + (chB._playerInfo.knockbackWeight * chB._playerInfo.hitCount[chB._playerInfo.hpm - chB._playerInfo.hp] * chA._playerInfo.attackPower * disVec.x),
+				//	chB._playerInfo.pos.y + (chB._playerInfo.knockbackWeight * chB._playerInfo.hitCount[chB._playerInfo.hpm - chB._playerInfo.hp] * chA._playerInfo.attackPower * disVec.y),
+				//	chB._playerInfo.pos.z
+				//);
+
+				//스택버전
 				chB.GetHitCollider()._attackedPos = Vector3d(
-					chB._playerInfo.pos.x + (chB._playerInfo.knockbackWeight * chB._playerInfo.hitCount[chB._playerInfo.hpm - chB._playerInfo.hp] * chA._playerInfo.attackPower * disVec.x),
-					chB._playerInfo.pos.y + (chB._playerInfo.knockbackWeight * chB._playerInfo.hitCount[chB._playerInfo.hpm - chB._playerInfo.hp] * chA._playerInfo.attackPower * disVec.y),
+					chB._playerInfo.pos.x + (chB._playerInfo.knockbackWeight * chB._playerInfo.hitPoint * chA._playerInfo.attackPower * disVec.x),
+					chB._playerInfo.pos.y + (chB._playerInfo.knockbackWeight * chB._playerInfo.hitPoint * chA._playerInfo.attackPower * disVec.y),
 					chB._playerInfo.pos.z
 				);
 
