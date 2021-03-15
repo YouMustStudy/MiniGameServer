@@ -169,6 +169,7 @@
     <ClInclude Include="MiniGameServer.h" />
     <ClInclude Include="RoomManager.h" />
     <ClInclude Include="Rooms\DMRoom.h" />
+    <ClInclude Include="ServerConfig.h" />
     <ClInclude Include="UserManager.h" />
     <ClInclude Include="Utills\Logger.h" />
     <ClInclude Include="Utills\UtilFunc.h" />

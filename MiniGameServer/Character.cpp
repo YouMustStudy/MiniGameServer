@@ -2,8 +2,8 @@
 #include "Rooms/DMRoom.h"
 
 Character::Character(size_t id, DMRoom* roomPtr)
-	:_hitColl(100.f, 100.f, Vector3d(0.0, 0.0, 0.0)),
-	_attackColl(200.f, 100.f, Vector3d(0.0, 0.0, 0.0)),
+	:_hitColl(CHARACTER_HITBOX_WIDTH, CHARACTER_HITBOX_HEIGHT, Vector3d(0.0, 0.0, 0.0)),
+	_attackColl(ATTACK_HITBOX_WIDTH, ATTACK_HITBOX_HEIGHT, Vector3d(0.0, 0.0, 0.0)),
 	id(id), roomPtr(roomPtr)
 {
 }
@@ -73,13 +73,6 @@ void Character::SetAbility(unsigned char characterType)
 
 void Character::UpdateState(float fTime)
 {
-	//공식 1 / fps * animation frame
-	static constexpr float ATK_READY_TIME = 0.1333333f;		//공격준비 프레임은 15fps 기준으로 2프레임
-	static constexpr float ATK_TIME = 0.3333333f;			//공격 프레임은 15fps 기준으로 5프레임
-	static const float DROP_SPEED = 5000.0f;				// 중력
-	static const float DEATH_HEIGHT = -1000.0f;				// 죽는 높이
-	static const float RESPAWN_TIME = 0.0f;					//리스폰 시간
-
 	_playerInfo.animTime += fTime;
 	switch (_playerInfo.curState)
 	{
@@ -116,7 +109,7 @@ void Character::UpdateState(float fTime)
 			_playerInfo.curState = EState::DIE;
 			_hitColl._bAttacked = false;
 			_playerInfo.animTime = 0.0f;
-			_playerInfo.dropSpeed = 100.0f;
+			_playerInfo.dropSpeed = CHARACTER_DROP_SPEED;
 			_playerInfo.pos.z = DEATH_HEIGHT;
 
 			SC_PACKET_CHARACTER_INFO teleportPacket{ id,
@@ -145,7 +138,7 @@ void Character::UpdateState(float fTime)
 				_playerInfo.pos = _playerInfo.initialPos;
 				_playerInfo.animTime = 0.0f;
 				_playerInfo.hitPoint = 1;
-				ChangeHP(_playerInfo.hpm);
+				ChangeHP(CHARACTER_MAX_HP);
 
 				SC_PACKET_CHARACTER_INFO teleportPacket{ id,
 					_playerInfo.pos.x, _playerInfo.pos.y, _playerInfo.pos.z,
