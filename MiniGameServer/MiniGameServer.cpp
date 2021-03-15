@@ -177,7 +177,16 @@ void MiniGameServer::ProcessPacket(User* user, size_t idx, void* buffer)
 		}
 		break;
 	}
-
+	case CS_READY:
+	{
+		if (nullptr != user->roomPtr)
+		{
+			auto packet = reinterpret_cast<CS_PACKET_MOVEDIR*>(buffer);
+			user->roomPtr->PushJob(CS_READY, reinterpret_cast<void*>(packet->uid));
+		}
+		break;
+	}
+	
 	default:
 		Logger::Log("처리되지 않은 유저 패킷 수신" + std::to_string(dp->type));
 		break;

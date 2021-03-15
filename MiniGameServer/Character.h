@@ -38,6 +38,8 @@ enum class EObjectType : unsigned char {
 // 플레이어 정보
 struct FPlayerInfo {
 		int id{};						// 네트워크 id
+		bool isReady{ false };			// 로딩 완료여부
+
 		Vector3d pos{};					//x좌표
 		Vector3d initialPos{};
 		Vector3d dir{};					//방향
@@ -58,7 +60,6 @@ struct FPlayerInfo {
 		EWeaponType 	curWeapon{};	// 현재 무기
 		EState		curState{};			//현재 상태
 		float animTime{0.0f};
-		
 };
 
 // 콜라이더. 캐릭터는 attack(공격전용), hit(피격전용) 두 종류를 가지고 있다.

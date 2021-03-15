@@ -72,10 +72,12 @@ private:
 	float deltaTime{};		//매 틱 변한 시간
 	static constexpr float DEFAULT_MATCH_TIME = 180.0f;
 	float leftTime{ DEFAULT_MATCH_TIME };		//남은 게임 시간
+	size_t readyCount{ 0 };
 
 	//실제 게임 처리
 	void ProcessAttack(UID uid);
 	void ProcessMoveDir(MoveDirInfo* info);
+	void ProcessReady(UID uid);
 
 	void UpdateLeftTime();
 	void UpdatePosition();
