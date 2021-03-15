@@ -157,6 +157,10 @@ void DMRoom::UpdateCollider()
 
 	for (auto& ch : characterList) // 공격하는 플레이어
 	{
+		if (EState::FALL == ch.GetCurState()
+			|| EState::DIE == ch.GetCurState())
+			continue;
+
 		//맵 밖으로 벗어나면 사망처리
 		if (false == CheckCollider(mapCollider, ch.GetHitCollider()))
 		{

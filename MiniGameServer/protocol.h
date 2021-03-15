@@ -194,7 +194,7 @@ public:
 class SC_PACKET_CHANGE_HP : public DEFAULT_PACKET
 {
 public:
-	SC_PACKET_CHANGE_HP(UID uid, int hp, UID attacker = (UID)-1) : uid(uid), hp(hp), attacker(attacker)
+	SC_PACKET_CHANGE_HP(UID uid, int hp, UID attacker = (UID)-1) : uid(uid), attacker(attacker), hp(hp)
 	{
 		size = sizeof(SC_PACKET_CHANGE_HP);
 		type = SC_CHANGE_HP;
@@ -220,7 +220,7 @@ public:
 class SC_PACKET_CHARACTER_INFO : public DEFAULT_PACKET
 {
 public:
-	SC_PACKET_CHARACTER_INFO(UID uid, float x, float y, float z, float dx, float dy) : uid(uid)
+	SC_PACKET_CHARACTER_INFO(UID uid, float x, float y, float z, float dx, float dy, bool teleport = false) : uid(uid), teleport(teleport)
 	{
 		size = sizeof(SC_PACKET_CHARACTER_INFO);
 		type = SC_CHARACTER_INFO;
@@ -233,6 +233,7 @@ public:
 	UID uid{};
 	float pos[3]{};
 	float dir[2]{};
+	bool teleport{false};
 };
 
 class SC_PACKET_SPAWN_EFFECT : public DEFAULT_PACKET

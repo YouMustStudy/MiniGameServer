@@ -45,14 +45,15 @@ void Character::UpdateState(float fTime)
 	//공식 1 / fps * animation frame
 	static constexpr float ATK_READY_TIME = 0.1333333f;		//공격준비 프레임은 15fps 기준으로 2프레임
 	static constexpr float ATK_TIME = 0.3333333f;			//공격 프레임은 15fps 기준으로 5프레임
-	static const float DROP_SPEED = 10000.0f; // 중력
-	static const float DEATH_HEIGHT = -500.0f; // 죽는 높이
-	static const float RESPAWN_TIME = 3.0f; //리스폰 시간
+	static const float DROP_SPEED = 5000.0f;				// 중력
+	static const float DEATH_HEIGHT = -500.0f;				// 죽는 높이
+	static const float RESPAWN_TIME = 3.0f;					//리스폰 시간
 
 	_playerInfo.animTime += fTime;
 	switch (_playerInfo.curState)
 	{
 	case EState::ATTACK_READY:
+	{
 		if (ATK_READY_TIME <= _playerInfo.animTime)
 		{
 			//공격상태로 전이
@@ -61,8 +62,10 @@ void Character::UpdateState(float fTime)
 			_attackColl._enabled = true;
 		}
 		break;
+	}
 
 	case EState::ATTACK:
+	{
 		if (ATK_TIME <= _playerInfo.animTime)
 		{
 			//아이들 상태로 전이
@@ -71,6 +74,7 @@ void Character::UpdateState(float fTime)
 			_attackColl._enabled = false;
 		}
 		break;
+	}
 
 	case EState::FALL: //맵밖으로 떨어지는중
 	{
@@ -78,11 +82,11 @@ void Character::UpdateState(float fTime)
 		_playerInfo.pos.z -= _playerInfo.dropSpeed * fTime;
 		if (DEATH_HEIGHT >= _playerInfo.pos.z)
 		{
-			_playerInfo.animTime = 0.0f;
 			_playerInfo.curState = EState::DIE;
-			_playerInfo.dropSpeed = 0.0f;
-			_playerInfo.pos.x = 0.0f;
-			_playerInfo.pos.y = 0.0f;
+			_hitColl._bAttacked = false;
+			_playerInfo.animTime = 0.0f;
+			_playerInfo.dropSpeed = 100.0f;
+			_playerInfo.pos.z = DEATH_HEIGHT;
 		}
 		break;
 	}
@@ -91,14 +95,20 @@ void Character::UpdateState(float fTime)
 	{
 		if (RESPAWN_TIME <= _playerInfo.animTime)
 		{
+			_hitColl._bAttacked = false;
 			_playerInfo.curState = EState::IDLE;
 			_playerInfo.pos = Vector3d{ 0, 0, 0 };
-			_hitColl._bAttacked = false;
 			_playerInfo.animTime = 0.0f;
 			ChangeHP(_playerInfo.hpm);
+			SC_PACKET_CHARACTER_INFO teleportPacket{ id,
+				_playerInfo.pos.x, _playerInfo.pos.y, _playerInfo.pos.z,
+				_playerInfo.dir.x, _playerInfo.dir.y, true };
+			if(nullptr != roomPtr)
+				roomPtr->infoData.EmplaceBack(&teleportPacket, teleportPacket.size);
 		}
 		break;
 	}
+
 	}
 }
 
