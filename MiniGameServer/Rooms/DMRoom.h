@@ -70,9 +70,11 @@ private:
 	PacketVector infoData;  //전송될 위치정보 패킷
 	bool isEnd{false};		//게임이 끝났는가?
 	float deltaTime{};		//매 틱 변한 시간
-
-	static constexpr float DEFAULT_MATCH_TIME = 5.0f;
+	static constexpr float DEFAULT_MATCH_TIME = 180.0f;
 	float leftTime{ DEFAULT_MATCH_TIME };		//남은 게임 시간
+
+	
+	
 
 	//실제 게임 처리
 	void ProcessAttack(UID uid);

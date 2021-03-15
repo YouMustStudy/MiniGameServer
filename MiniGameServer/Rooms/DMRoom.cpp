@@ -145,7 +145,7 @@ void DMRoom::UpdateCollider()
 
 				/* 피격체의 콜라이더를 피격당한상태로 바꾸고, 밀려날 위치를 부여한다. */
 				chB._playerInfo.curState = EState::IDLE;		//문제 있음 -> 이때 공격패킷오면 바로 반격 가능
-				chB.GetDamage(1);
+				chB.GetDamage(chA.id, 1);
 
 				// 이펙트 소환 패킷 중계
 				SC_PACKET_SPAWN_EFFECT effectPacket{0, (int)EObjectType::HitEffect, chB._playerInfo.pos.x, chB._playerInfo.pos.y, chB._playerInfo.pos.z};
@@ -160,7 +160,7 @@ void DMRoom::UpdateCollider()
 		//맵 밖으로 벗어나면 사망처리
 		if (false == CheckCollider(mapCollider, ch.GetHitCollider()))
 		{
-			ch._playerInfo.curState = EState::DIE;
+			ch._playerInfo.curState = EState::FALL;
 			ch.GetAttackCollider()._enabled = false;
 		}
 	}

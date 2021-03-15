@@ -194,12 +194,13 @@ public:
 class SC_PACKET_CHANGE_HP : public DEFAULT_PACKET
 {
 public:
-	SC_PACKET_CHANGE_HP(UID uid, int hp) : uid(uid), hp(hp)
+	SC_PACKET_CHANGE_HP(UID uid, int hp, UID attacker = (UID)-1) : uid(uid), hp(hp), attacker(attacker)
 	{
 		size = sizeof(SC_PACKET_CHANGE_HP);
 		type = SC_CHANGE_HP;
 	};
 	UID uid{};
+	UID attacker{};
 	int hp{};
 };
 

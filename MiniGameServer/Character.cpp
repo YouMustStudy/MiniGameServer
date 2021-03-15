@@ -45,6 +45,10 @@ void Character::UpdateState(float fTime)
 	//공식 1 / fps * animation frame
 	static constexpr float ATK_READY_TIME = 0.1333333f;		//공격준비 프레임은 15fps 기준으로 2프레임
 	static constexpr float ATK_TIME = 0.3333333f;			//공격 프레임은 15fps 기준으로 5프레임
+	static const float DROP_SPEED = 10000.0f; // 중력
+	static const float DEATH_HEIGHT = -500.0f; // 죽는 높이
+	static const float RESPAWN_TIME = 3.0f; //리스폰 시간
+
 	_playerInfo.animTime += fTime;
 	switch (_playerInfo.curState)
 	{
@@ -68,26 +72,33 @@ void Character::UpdateState(float fTime)
 		}
 		break;
 
-	case EState::DIE:
+	case EState::FALL: //맵밖으로 떨어지는중
 	{
-		static const float DROP_SPEED = 10000.0f;
-		static const float DEATH_HEIGHT = -500.0f; // 죽는 높이
-
 		_playerInfo.dropSpeed += DROP_SPEED * fTime;
 		_playerInfo.pos.z -= _playerInfo.dropSpeed * fTime;
 		if (DEATH_HEIGHT >= _playerInfo.pos.z)
 		{
-			//차후 리스폰으로 분할
-			//일정 높이 이하로 낙하했으면 리스폰.
+			_playerInfo.animTime = 0.0f;
+			_playerInfo.curState = EState::DIE;
+			_playerInfo.dropSpeed = 0.0f;
+			_playerInfo.pos.x = 0.0f;
+			_playerInfo.pos.y = 0.0f;
+		}
+		break;
+	}
+
+	case EState::DIE: //리스폰 대기
+	{
+		if (RESPAWN_TIME <= _playerInfo.animTime)
+		{
 			_playerInfo.curState = EState::IDLE;
 			_playerInfo.pos = Vector3d{ 0, 0, 0 };
-			_playerInfo.dropSpeed = 0.0f;
 			_hitColl._bAttacked = false;
-
+			_playerInfo.animTime = 0.0f;
 			ChangeHP(_playerInfo.hpm);
 		}
+		break;
 	}
-	break;
 	}
 }
 
@@ -102,8 +113,15 @@ void Character::ChangeHP(int hp)
 	}
 }
 
-void Character::GetDamage(int damage)
+void Character::GetDamage(UID attacker, int damage)
 {
 	damage = (damage < _playerInfo.hp) ? damage : _playerInfo.hp;
-	ChangeHP(_playerInfo.hp - damage);
+	int afterHP = _playerInfo.hp - damage;
+	if (0 <= afterHP)
+	{
+		_playerInfo.hp = afterHP;
+		SC_PACKET_CHANGE_HP changeHPPacket{ id ,_playerInfo.hp, attacker };
+		if (nullptr != roomPtr)
+			roomPtr->eventData.EmplaceBack(&changeHPPacket, changeHPPacket.size);
+	}
 }

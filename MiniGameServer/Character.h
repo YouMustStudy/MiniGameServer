@@ -1,5 +1,6 @@
 #pragma once
 #include "Utills/Vector3d.h"
+#include "protocol.h"
 
 struct Collider;
 
@@ -9,6 +10,7 @@ enum class EState : unsigned char {
 	MOVE,
 	ATTACK_READY,
 	ATTACK,
+	FALL,
 	DIE,
 	TYPE_END
 };
@@ -117,7 +119,7 @@ public:
 
 	bool operator==(const Character& other) { return id == other.id; };
 	void Update(float fTime);
-	void GetDamage(int damage);
+	void GetDamage(UID attacker, int damage);
 
 private:
 	void KnockBack(float fTime);
