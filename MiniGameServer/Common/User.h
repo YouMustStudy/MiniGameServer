@@ -29,6 +29,7 @@ public:
 	int state{ST_DISCONN};
 	UID uid{ (UID)-1 };								 ///< uid
 	std::wstring id;
+	unsigned char characterType{};
 	class DMRoom* roomPtr{nullptr};
 
 	//Recv한 데이터 재저장용 버퍼, 실제 recv는 recvOver내에서 일어남!!

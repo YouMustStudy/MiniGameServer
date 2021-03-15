@@ -138,8 +138,8 @@ void DMRoom::UpdateCollider()
 				//넉백 위치 부여
 				chB.GetHitCollider()._bAttacked = true;
 				chB.GetHitCollider()._attackedPos = Vector3d(
-					chB._playerInfo.pos.x + (chB._playerInfo.hitCount[chB._playerInfo.hpm - chB._playerInfo.hp] * chA._playerInfo.attackPower * disVec.x),
-					chB._playerInfo.pos.y + (chB._playerInfo.hitCount[chB._playerInfo.hpm - chB._playerInfo.hp] * chA._playerInfo.attackPower * disVec.y),
+					chB._playerInfo.pos.x + (chB._playerInfo.knockbackWeight * chB._playerInfo.hitCount[chB._playerInfo.hpm - chB._playerInfo.hp] * chA._playerInfo.attackPower * disVec.x),
+					chB._playerInfo.pos.y + (chB._playerInfo.knockbackWeight * chB._playerInfo.hitCount[chB._playerInfo.hpm - chB._playerInfo.hp] * chA._playerInfo.attackPower * disVec.y),
 					chB._playerInfo.pos.z
 				);
 
@@ -243,15 +243,22 @@ void DMRoom::Regist(std::vector<User*> users)
 
 			characterList[i]._playerInfo.initialPos = initialPos[i % _countof(initialPos)];
 			characterList[i]._playerInfo.pos = characterList[i]._playerInfo.initialPos;
+			characterList[i].SetAbility(users[i]->characterType);
 			
-			SC_PACKET_SPAWN_CHARACTER spawnCharacterPacket{ i, 0, 0, 0 };
-			eventData.EmplaceBack(&spawnCharacterPacket, spawnCharacterPacket.size);
 			SC_PACKET_UID packet{ i };
 			MiniGameServer::Instance().SendPacket(users[i], &packet);
+
+			SC_PACKET_SPAWN_CHARACTER spawnCharacterPacket{ i, users[i]->characterType, users[i]->id, characterList[i]._playerInfo.initialPos.x, characterList[i]._playerInfo.initialPos.y };
+			eventData.EmplaceBack(&spawnCharacterPacket, spawnCharacterPacket.size);
 		}
 	}
+
+	// [스폰데이터 | 게임 시작 시그널] 전송
 	SC_PACKET_CHANGE_SCENE changeScenePacket{ SCENE_GAME };
 	eventData.EmplaceBack(&changeScenePacket, changeScenePacket.size);
+	for (auto& user : userList)
+		MiniGameServer::Instance().SendPacket(user, eventData.data, eventData.len);
+	eventData.Clear();
 	return;
 }
 
@@ -281,13 +288,22 @@ void DMRoom::End()
 
 bool DMRoom::EndCheck()
 {
+	int leftUserNum = 0;
+	for (auto& ch : characterList)
+		if (true == ch.IsAlive())
+			++leftUserNum;
+
+	if (1 == leftUserNum)
+		return true;
+
+
 	//제한시간이 다 소모되면 게임 종료
 	if (0 >= leftTime)
 	{
 		Logger::Log("룸 타임아웃, 매치 종료");
 		return true;
 	}
-		
+
 	//유저가 모두 접속을 종료하면 게임 종료
 	if (true == userList.empty())
 	{
@@ -301,6 +317,10 @@ bool DMRoom::EndCheck()
 void DMRoom::QuitAllUser()
 {
 	//벡터인데 앞부분부터 삭제함. 일단 있는 함수를 활용하지만 이후 개선 필요
+	SC_PACKET_CHANGE_SCENE changeScenePacket{ SCENE_MAIN };
 	for (auto& user : userList)
+	{
+		MiniGameServer::Instance().SendPacket(user, &changeScenePacket, changeScenePacket.size);
 		Disconnect(user);
+	}
 }

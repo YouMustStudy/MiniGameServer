@@ -1,4 +1,5 @@
 #pragma once
+#include <string>
 
 //Server -> Client.
 enum SC_PACKET
@@ -18,7 +19,7 @@ enum SC_PACKET
 	SC_ATTACK,					///< 캐릭터 공격
 	SC_GET_ITEM,				///< 캐릭터 아이템 획득
 	SC_CHANGE_HP,				///< 캐릭터 체력 변경
-	SC_CHANGE_SCORE,			///< 캐릭터 스코어 변경
+	SC_CHANGE_LIFE,				///< 캐릭터 목숨 변경
 	SC_CHARACTER_INFO,			///< 캐릭터의 위치, 방향 등 값
 	SC_SPAWN_EFFECT,			///< 타격모션 등 이펙트 출력
 	SC_COUNT
@@ -50,7 +51,7 @@ using PACKET_TYPE = unsigned char;
 using PACKET_SIZE = unsigned short;
 using UID = size_t;
 using SCENETYPE = unsigned char;
-constexpr size_t NAME_LENGTH = 20;
+constexpr size_t NAME_LENGTH = 6;
 
 #pragma pack(1)
 class DEFAULT_PACKET
@@ -155,15 +156,19 @@ public:
 class SC_PACKET_SPAWN_CHARACTER : public DEFAULT_PACKET
 {
 public:
-	SC_PACKET_SPAWN_CHARACTER(UID uid, int characterType, float x, float y) : uid(uid), characterType(characterType)
+	SC_PACKET_SPAWN_CHARACTER(UID uid, unsigned char characterType, const std::wstring& userName, float x, float y) : uid(uid), characterType(characterType)
 	{
 		size = sizeof(SC_PACKET_SPAWN_CHARACTER);
 		type = SC_SPAWN_CHARACTER;
 		pos[0] = x;
 		pos[1] = y;
+
+		wcscpy_s<NAME_LENGTH+1>(name, userName.c_str());
+		/*size_t copyLen = (userName.size() < NAME_LENGTH) ? userName.size() : NAME_LENGTH;
+		memcpy(this->name, userName.c_str(), sizeof(wchar_t) * copyLen);*/
 	};
 	UID uid{};
-	int characterType{};
+	unsigned char characterType{};
 	wchar_t name[NAME_LENGTH + 1]{};
 	float pos[2]{};
 };
@@ -204,17 +209,16 @@ public:
 	int hp{};
 };
 
-class SC_PACKET_CHANGE_SCORE : public DEFAULT_PACKET
+class SC_PACKET_CHANGE_LIFE : public DEFAULT_PACKET
 {
 public:
-	SC_PACKET_CHANGE_SCORE(UID uid, int curKill, int totalKill) : uid(uid), curKill(curKill), totalKill(totalKill)
+	SC_PACKET_CHANGE_LIFE(UID uid, char life) : uid(uid), life(life)
 	{
-		size = sizeof(SC_PACKET_CHANGE_SCORE);
-		type = SC_CHANGE_SCORE;
+		size = sizeof(SC_PACKET_CHANGE_LIFE);
+		type = SC_CHANGE_LIFE;
 	};
 	UID uid{};
-	int curKill{};
-	int totalKill{};
+	char life;
 };
 
 class SC_PACKET_CHARACTER_INFO : public DEFAULT_PACKET
@@ -261,6 +265,7 @@ public:
 		type = CS_REQUEST_LOGIN;
 	};
 	wchar_t name[NAME_LENGTH + 1]{};
+	unsigned char characterType{};
 };
 
 class CS_PACKET_ATTACK : public DEFAULT_PACKET

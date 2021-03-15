@@ -24,9 +24,10 @@ struct AcceptInfo
 
 struct LoginInfo
 {
-	LoginInfo(size_t idx, const wchar_t* id) : idx(idx), id(id) {};
+	LoginInfo(size_t idx, const wchar_t* id, unsigned char characterType) : idx(idx), id(id), characterType(characterType) {};
 	size_t idx;
 	std::wstring id;
+	unsigned char characterType;
 };
 
 class UserManager : public LockFreeQueue

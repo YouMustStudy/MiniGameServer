@@ -40,6 +40,36 @@ void Character::UpdatePos(float fTime)
 	_playerInfo.pos += _playerInfo.dir * _playerInfo.moveSpeed * fTime;
 }
 
+void Character::SetAbility(unsigned char characterType)
+{
+	switch (characterType)
+	{
+	case 0:
+		_playerInfo.knockbackWeight *= 1.0f;
+		_playerInfo.attackPower *= 1.0f;
+		_playerInfo.moveSpeed *= 1.0f;
+		break;
+
+	case 1:
+		_playerInfo.knockbackWeight *= 1.0f;
+		_playerInfo.attackPower *= 0.8f;
+		_playerInfo.moveSpeed *= 1.2f;
+		break;
+
+	case 2:
+		_playerInfo.knockbackWeight *= 1.67f;
+		_playerInfo.attackPower *= 1.4f;
+		_playerInfo.moveSpeed *= 0.8f;
+		break;
+
+	case 3:
+		_playerInfo.knockbackWeight *= 1.25f;
+		_playerInfo.attackPower *= 0.8f;
+		_playerInfo.moveSpeed *= 1.4f;
+		break;
+	}
+}
+
 void Character::UpdateState(float fTime)
 {
 	//공식 1 / fps * animation frame
@@ -87,24 +117,34 @@ void Character::UpdateState(float fTime)
 			_playerInfo.animTime = 0.0f;
 			_playerInfo.dropSpeed = 100.0f;
 			_playerInfo.pos.z = DEATH_HEIGHT;
+
+			//남은 목숨 수 중계
+			--_playerInfo.life;
+			SC_PACKET_CHANGE_LIFE lifePacket{ id, _playerInfo.life };
+			if(nullptr != roomPtr)
+				roomPtr->infoData.EmplaceBack(&lifePacket, lifePacket.size);
 		}
 		break;
 	}
 
 	case EState::DIE: //리스폰 대기
 	{
-		if (RESPAWN_TIME <= _playerInfo.animTime)
+		if (0 < _playerInfo.life)
 		{
-			_hitColl._bAttacked = false;
-			_playerInfo.curState = EState::IDLE;
-			_playerInfo.pos = _playerInfo.initialPos;
-			_playerInfo.animTime = 0.0f;
-			ChangeHP(_playerInfo.hpm);
-			SC_PACKET_CHARACTER_INFO teleportPacket{ id,
-				_playerInfo.pos.x, _playerInfo.pos.y, _playerInfo.pos.z,
-				_playerInfo.dir.x, _playerInfo.dir.y, true };
-			if(nullptr != roomPtr)
-				roomPtr->infoData.EmplaceBack(&teleportPacket, teleportPacket.size);
+			if (RESPAWN_TIME <= _playerInfo.animTime)
+			{
+				_hitColl._bAttacked = false;
+				_playerInfo.curState = EState::IDLE;
+				_playerInfo.pos = _playerInfo.initialPos;
+				_playerInfo.animTime = 0.0f;
+				ChangeHP(_playerInfo.hpm);
+
+				SC_PACKET_CHARACTER_INFO teleportPacket{ id,
+					_playerInfo.pos.x, _playerInfo.pos.y, _playerInfo.pos.z,
+					_playerInfo.dir.x, _playerInfo.dir.y, true };
+				if (nullptr != roomPtr)
+					roomPtr->infoData.EmplaceBack(&teleportPacket, teleportPacket.size);
+			}
 		}
 		break;
 	}

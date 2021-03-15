@@ -129,7 +129,6 @@ void UserManager::ProcessLogin(LoginInfo* info)
 		return;
 	}
 
-	userList[reqUser].state = ST_NOLOGIN;
 	//DB 아이디, 비밀번호 검증
 
 	//중복 로그인 체크
@@ -144,6 +143,7 @@ void UserManager::ProcessLogin(LoginInfo* info)
 	//로그인 OK!!
 	userList[reqUser].id = info->id;
 	userList[reqUser].state = ST_IDLE;
+	userList[reqUser].characterType = info->characterType;
 	userIDSet.emplace(info->id);
 	Logger::Log("유저 로그인 성공");
 

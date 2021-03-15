@@ -42,12 +42,13 @@ struct FPlayerInfo {
 		Vector3d initialPos{};
 		Vector3d dir{};					//방향
 
-		int life{ 3 };										//목숨
+		char life{ 3 };										//목숨
 		int hp{3};											//체력
 		int hpm{3};											//최대체력
-		float hitCount[3]{ 1.0f, 3.0f, 10.0f };				//밀려날 가중치
+		float hitCount[3]{ 1.0f, 3.0f, 20.0f };				//밀려날 가중치
 
 		float attackPower{200.0f};		//공격력
+		float knockbackWeight{ 1.0f };
 		float moveSpeed{1000.0f};		//이동속도
 		float dropSpeed{0.0f};
 
@@ -121,6 +122,8 @@ public:
 	bool operator==(const Character& other) { return id == other.id; };
 	void Update(float fTime);
 	void GetDamage(UID attacker, int damage);
+	void SetAbility(unsigned char characterType);
+	bool IsAlive() { return 0 < _playerInfo.life; };
 
 private:
 	void KnockBack(float fTime);

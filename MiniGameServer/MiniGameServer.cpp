@@ -146,7 +146,7 @@ void MiniGameServer::ProcessPacket(User* user, size_t idx, void* buffer)
 	case CS_REQUEST_LOGIN:
 	{
 		auto packet = reinterpret_cast<CS_PACKET_REQUEST_LOGIN*>(buffer);
-		UserManager::Instance().PushJob(USER_LOGIN, new LoginInfo(idx, packet->name));
+		UserManager::Instance().PushJob(USER_LOGIN, new LoginInfo(idx, packet->name, packet->characterType));
 		break;
 	}
 	case CS_ENQUEUE:
