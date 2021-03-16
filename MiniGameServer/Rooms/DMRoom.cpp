@@ -105,7 +105,8 @@ void DMRoom::ProcessReady(UID uid)
 			//이후 업데이트 구문 추가
 			//레디가 오기전에 유저 종료가 발생하면?
 			//디스커넥 쪽에서도 동일 처리 필요
-			//MiniGameServer::Instance().AddEvent(queueType.second, EV_UPDATE, lastUpdateTime);
+			Logger::Log("모든 유저 준비 완료, 게임 시작");
+			MiniGameServer::Instance().AddEvent(queueType.second, EV_UPDATE, lastUpdateTime);
 		};
 	}
 }
@@ -304,6 +305,7 @@ void DMRoom::Disconnect(User* user)
 			UID uid = std::distance(userList.begin(), iter);
 			ProcessReady(uid);
 
+			//유저 삭제처리
 			user->roomPtr = nullptr;
 			userList.erase(iter);
 			UserManager::Instance().PushJob(USER_LEAVEROOM, reinterpret_cast<void*>(user->uid));
