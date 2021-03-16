@@ -10,6 +10,7 @@
 #include "..\LockFreeQueue.h"
 #include "..\Character.h"
 #include "..\protocol.h"
+#include "..\ServerConfig.h"
 
 class User;
 
@@ -30,10 +31,8 @@ GameLogic (종료체크도 시행)
 SendGameState (게임 상태 전송)
 
 게임 종료 시 룸매니저로 회수 요청하는 로직으로 구성
-
 */
-constexpr float MAP_WIDTH = 1000.0f;
-constexpr float MAP_HEIGHT = 1000.0f;
+
 class DMRoom : public LockFreeQueue
 {
 	friend Character;
@@ -62,7 +61,6 @@ private:
 	void Update();
 
 	//기본 방 운영 정보
-	static constexpr long long UPDATE_INTERVAL = 20;					//업데이트 간격
 	std::chrono::high_resolution_clock::time_point currentUpdateTime;	//deltaTime 측정용
 	std::chrono::high_resolution_clock::time_point lastUpdateTime;		//상동
 
@@ -70,22 +68,24 @@ private:
 	PacketVector infoData;  //전송될 위치정보 패킷
 	bool isEnd{false};		//게임이 끝났는가?
 	float deltaTime{};		//매 틱 변한 시간
-	static constexpr float DEFAULT_MATCH_TIME = 180.0f;
 	float leftTime{ DEFAULT_MATCH_TIME };		//남은 게임 시간
+	size_t readyCount{ 0 };	//레디한 유저 수
 
 	//실제 게임 처리
+	//패킷 처리부
 	void ProcessAttack(UID uid);
 	void ProcessMoveDir(MoveDirInfo* info);
+	void ProcessReady(UID uid);
 
-	void UpdateLeftTime();
-	void UpdatePosition();
-	void UpdateCollider();
+	void UpdateLeftTime();	//남은 시간 체크 - 1초단위로 클라에게 중계
+	void UpdatePosition();	//위치 업데이트
+	void UpdateCollider();	//충돌 처리
 	bool CheckCollider(const Collider& a, const Collider& b);
 
 	std::vector<Character> characterList{};	//플레이하는 '캐릭터' 컨테이너
 	std::vector<User*> userList{};			//플레이중인 '유저' 컨테이너
 
-	Vector3d initialPos[4]{
+	Vector3d initialPos[4]{					//캐릭터 시작위치
 		{-900.0f, -900.0f, 0.0f},
 		{900.0f, -900.0f, 0.0f},
 		{-900.0f, 900.0f, 0.0f},

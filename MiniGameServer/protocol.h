@@ -22,6 +22,7 @@ enum SC_PACKET
 	SC_CHANGE_LIFE,				///< 캐릭터 목숨 변경
 	SC_CHARACTER_INFO,			///< 캐릭터의 위치, 방향 등 값
 	SC_SPAWN_EFFECT,			///< 타격모션 등 이펙트 출력
+	SC_USER_QUIT,
 	SC_COUNT
 };
 
@@ -38,6 +39,7 @@ enum CS_PACKET
 	CS_LEAVEROOM,				///< 유저 접속 종료 요청
 	CS_ATTACK,					///< 유저 공격요청
 	CS_MOVEDIR,					///< 유저 움직임 요청
+	CS_READY,					///< 3,2,1 카운트 다 셌음
 	CS_COUNT
 };
 
@@ -256,6 +258,17 @@ public:
 	float pos[3]{};
 };
 
+class SC_PACKET_USER_QUIT : public DEFAULT_PACKET
+{
+public:
+	SC_PACKET_USER_QUIT(UID uid) : uid(uid)
+	{
+		size = sizeof(SC_PACKET_USER_QUIT);
+		type = SC_USER_QUIT;
+	};
+	UID uid{};
+};
+
 class CS_PACKET_REQUEST_LOGIN : public DEFAULT_PACKET
 {
 public:
@@ -310,6 +323,17 @@ public:
 		size = sizeof(CS_PACKET_DEQUEUE);
 		type = CS_DEQUEUE;
 	};
+};
+
+class CS_PACKET_READY : public DEFAULT_PACKET
+{
+public:
+	CS_PACKET_READY(UID uid) : uid(uid)
+	{
+		size = sizeof(CS_PACKET_READY);
+		type = CS_READY;
+	};
+	UID uid;
 };
 
 #pragma pack()

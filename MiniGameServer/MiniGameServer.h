@@ -13,12 +13,11 @@
 #include ".\Rooms\DMRoom.h"
 #include ".\Utills\Logger.h"
 #include "protocol.h"
+#include "ServerConfig.h"
 
 #pragma comment(lib, "ws2_32")
 
 enum EVENT_TYPE { EV_ACCEPT, EV_DISCONN, EV_RECV, EV_SEND, EV_UPDATE };
-constexpr auto RECV_BUF_SIZE = 1024;
-
 /**
 @brief 미니게임서버
 @author Gurnwoo Kim
@@ -26,8 +25,8 @@ constexpr auto RECV_BUF_SIZE = 1024;
 class MiniGameServer
 {
 private:
-	size_t NUM_THREADS{ 10 };
-	short SERVER_PORT{ 15600 };
+	size_t NUM_THREADS{ THREAD_NUM };
+	short SERVER_PORT{ SERVER_PORT };
 
 	std::atomic<int> m_playerNum;		///< 총 접속 인원 수
 	HANDLE m_iocp;						///< 작업 스레드용 IOCP 핸들

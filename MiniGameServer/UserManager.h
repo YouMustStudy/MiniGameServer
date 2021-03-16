@@ -5,6 +5,7 @@
 #include "Common/User.h"
 #include "LockFreeQueue.h"
 #include "MatchQueue.h"
+#include "ServerConfig.h"
 
 enum UserJobType
 {
@@ -53,7 +54,6 @@ private:
 
 	void DisconnectUser(size_t idx);
 
-	static constexpr size_t MAX_USER_SIZE = 1000;
 	std::array<User, MAX_USER_SIZE> userList;
 	std::unordered_set<std::wstring> userIDSet;
 	std::stack<size_t> indexPool;

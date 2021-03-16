@@ -24,6 +24,7 @@ void DMRoom::Init()
 	eventData.Clear();
 	infoData.Clear();
 	leftTime = DEFAULT_MATCH_TIME;
+	readyCount = 0;
 }
 
 void DMRoom::ProcessJob(Job job)
@@ -46,6 +47,10 @@ void DMRoom::ProcessJob(Job job)
 	case CS_MOVEDIR:
 		//Logger::Log("유저 디렉션 수신 " + std::to_string(reinterpret_cast<MoveDirInfo*>(job.second)->uid));
 		ProcessMoveDir(reinterpret_cast<MoveDirInfo*>(job.second));
+		break;
+
+	case CS_READY:
+		ProcessReady(reinterpret_cast<UID>(job.second));
 		break;
 
 	default:
@@ -88,6 +93,22 @@ void DMRoom::ProcessMoveDir(MoveDirInfo* info)
 	characterList[info->uid]._playerInfo.dir.x = info->x;
 	characterList[info->uid]._playerInfo.dir.y = info->y;
 	delete info;
+}
+
+void DMRoom::ProcessReady(UID uid)
+{
+	if (false == characterList[uid]._playerInfo.isReady)
+	{
+		characterList[uid]._playerInfo.isReady = true;
+		if (++readyCount == characterList.size())
+		{
+			//이후 업데이트 구문 추가
+			//레디가 오기전에 유저 종료가 발생하면?
+			//디스커넥 쪽에서도 동일 처리 필요
+			Logger::Log("모든 유저 준비 완료, 게임 시작");
+			MiniGameServer::Instance().AddEvent(queueType.second, EV_UPDATE, lastUpdateTime);
+		};
+	}
 }
 
 void DMRoom::UpdateLeftTime()
@@ -137,9 +158,18 @@ void DMRoom::UpdateCollider()
 
 				//넉백 위치 부여
 				chB.GetHitCollider()._bAttacked = true;
+
+				//하트버전
+				//chB.GetHitCollider()._attackedPos = Vector3d(
+				//	chB._playerInfo.pos.x + (chB._playerInfo.knockbackWeight * chB._playerInfo.hitCount[chB._playerInfo.hpm - chB._playerInfo.hp] * chA._playerInfo.attackPower * disVec.x),
+				//	chB._playerInfo.pos.y + (chB._playerInfo.knockbackWeight * chB._playerInfo.hitCount[chB._playerInfo.hpm - chB._playerInfo.hp] * chA._playerInfo.attackPower * disVec.y),
+				//	chB._playerInfo.pos.z
+				//);
+
+				//스택버전
 				chB.GetHitCollider()._attackedPos = Vector3d(
-					chB._playerInfo.pos.x + (chB._playerInfo.knockbackWeight * chB._playerInfo.hitCount[chB._playerInfo.hpm - chB._playerInfo.hp] * chA._playerInfo.attackPower * disVec.x),
-					chB._playerInfo.pos.y + (chB._playerInfo.knockbackWeight * chB._playerInfo.hitCount[chB._playerInfo.hpm - chB._playerInfo.hp] * chA._playerInfo.attackPower * disVec.y),
+					chB._playerInfo.pos.x + (chB._playerInfo.knockbackWeight * chB._playerInfo.hitPoint * chA._playerInfo.attackPower * disVec.x),
+					chB._playerInfo.pos.y + (chB._playerInfo.knockbackWeight * chB._playerInfo.hitPoint * chA._playerInfo.attackPower * disVec.y),
 					chB._playerInfo.pos.z
 				);
 
@@ -271,9 +301,18 @@ void DMRoom::Disconnect(User* user)
 		auto iter = std::find(userList.begin(), userList.end(), user);
 		if (iter != userList.end())
 		{
+			//레디 시그널이 오기 전 종료라면? 확인해보자
+			UID uid = std::distance(userList.begin(), iter);
+			ProcessReady(uid);
+
+			//유저 삭제처리
 			user->roomPtr = nullptr;
 			userList.erase(iter);
 			UserManager::Instance().PushJob(USER_LEAVEROOM, reinterpret_cast<void*>(user->uid));
+
+			//유저 종료 통보
+			SC_PACKET_USER_QUIT quitPacket{ uid };
+			eventData.EmplaceBack(&quitPacket, quitPacket.size);
 		}
 	}
 }
@@ -295,7 +334,6 @@ bool DMRoom::EndCheck()
 
 	if (1 == leftUserNum)
 		return true;
-
 
 	//제한시간이 다 소모되면 게임 종료
 	if (0 >= leftTime)

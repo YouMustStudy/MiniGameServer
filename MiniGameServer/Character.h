@@ -1,6 +1,7 @@
 #pragma once
 #include "Utills/Vector3d.h"
 #include "protocol.h"
+#include "ServerConfig.h"
 
 struct Collider;
 
@@ -38,26 +39,27 @@ enum class EObjectType : unsigned char {
 // 플레이어 정보
 struct FPlayerInfo {
 		int id{};						// 네트워크 id
+		bool isReady{ false };			// 로딩 완료여부
+
 		Vector3d pos{};					//x좌표
 		Vector3d initialPos{};
 		Vector3d dir{};					//방향
 
-		char life{ 3 };										//목숨
-		int hp{3};											//체력
-		int hpm{3};											//최대체력
+		char life{ CHARACTER_LIFE };						//목숨
+		int hp{ CHARACTER_MAX_HP };							//체력
 		float hitCount[3]{ 1.0f, 3.0f, 20.0f };				//밀려날 가중치
+		int hitPoint{ 1 };
 
-		float attackPower{200.0f};		//공격력
-		float knockbackWeight{ 1.0f };
-		float moveSpeed{1000.0f};		//이동속도
-		float dropSpeed{0.0f};
+		float attackPower{ CHARACTER_ATTACK_POWER };			//공격력
+		float knockbackWeight{ CHARACTER_KNOCKBACK_WEIGHT };
+		float moveSpeed{ CHARACTER_MOVE_SPEED };				//이동속도
+		float dropSpeed{ CHARACTER_DROP_SPEED };
 
 		
 		ESpriteType	sprite{};			//sprite 종류
 		EWeaponType 	curWeapon{};	// 현재 무기
 		EState		curState{};			//현재 상태
 		float animTime{0.0f};
-		
 };
 
 // 콜라이더. 캐릭터는 attack(공격전용), hit(피격전용) 두 종류를 가지고 있다.

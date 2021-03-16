@@ -3,6 +3,7 @@
 #include <list>
 #include <mutex>
 #include <vector>
+#include "ServerConfig.h"
 
 
 /**
@@ -15,6 +16,7 @@
 class MatchQueue
 {
 	static constexpr size_t REQUIRE_USER_NUM = 3;
+
 	using IdxMapper = std::unordered_map<size_t, std::list<size_t>::iterator>;
 	using UserQueue = std::list<size_t>;
 

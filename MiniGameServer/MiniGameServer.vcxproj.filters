@@ -140,5 +140,8 @@
     <ClInclude Include="Utills\Vector3d.h">
       <Filter>Utills</Filter>
     </ClInclude>
+    <ClInclude Include="ServerConfig.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

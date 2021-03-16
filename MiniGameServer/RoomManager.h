@@ -40,7 +40,6 @@ private:
 	void ProcessCreateRoom(CreateRoomInfo* info);
 	void ProcessDestroyRoom(size_t idx);
 
-	static constexpr size_t MAX_ROOM_SIZE = 200;
 	std::array<DMRoom, MAX_ROOM_SIZE> roomList{};
 	std::stack<size_t> indexPool;
 };

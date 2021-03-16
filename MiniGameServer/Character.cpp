@@ -2,8 +2,8 @@
 #include "Rooms/DMRoom.h"
 
 Character::Character(size_t id, DMRoom* roomPtr)
-	:_hitColl(100.f, 100.f, Vector3d(0.0, 0.0, 0.0)),
-	_attackColl(200.f, 100.f, Vector3d(0.0, 0.0, 0.0)),
+	:_hitColl(CHARACTER_HITBOX_WIDTH, CHARACTER_HITBOX_HEIGHT, Vector3d(0.0, 0.0, 0.0)),
+	_attackColl(ATTACK_HITBOX_WIDTH, ATTACK_HITBOX_HEIGHT, Vector3d(0.0, 0.0, 0.0)),
 	id(id), roomPtr(roomPtr)
 {
 }
@@ -13,7 +13,8 @@ void Character::Update(float fTime)
 	UpdateState(fTime);
 	if (true == GetHitCollider()._bAttacked)
 		KnockBack(fTime);
-	else
+	else if(EState::DIE != _playerInfo.curState
+		&& EState::FALL != _playerInfo.curState)
 		UpdatePos(fTime);
 }
 
@@ -44,7 +45,7 @@ void Character::SetAbility(unsigned char characterType)
 {
 	switch (characterType)
 	{
-	case 0: // 인간
+	case 0: //인간
 		_playerInfo.knockbackWeight *= 1.0f;
 		_playerInfo.attackPower *= 1.0f;
 		_playerInfo.moveSpeed *= 1.0f;
@@ -56,7 +57,7 @@ void Character::SetAbility(unsigned char characterType)
 		_playerInfo.moveSpeed *= 1.4f;
 		break;
 
-	case 2: // 드워프
+	case 2: //드워프
 		_playerInfo.knockbackWeight *= 1.67f;
 		_playerInfo.attackPower *= 1.4f;
 		_playerInfo.moveSpeed *= 0.8f;
@@ -115,14 +116,20 @@ void Character::UpdateState(float fTime)
 			_playerInfo.curState = EState::DIE;
 			_hitColl._bAttacked = false;
 			_playerInfo.animTime = 0.0f;
-			_playerInfo.dropSpeed = 100.0f;
+			_playerInfo.dropSpeed = CHARACTER_DROP_SPEED;
 			_playerInfo.pos.z = DEATH_HEIGHT;
 
+			SC_PACKET_CHARACTER_INFO teleportPacket{ id,
+		5555.0f, 5555.0f, _playerInfo.pos.z,
+		_playerInfo.dir.x, _playerInfo.dir.y, true };
 			//남은 목숨 수 중계
 			--_playerInfo.life;
 			SC_PACKET_CHANGE_LIFE lifePacket{ id, _playerInfo.life };
-			if(nullptr != roomPtr)
+			if (nullptr != roomPtr)
+			{
+				roomPtr->infoData.EmplaceBack(&teleportPacket, teleportPacket.size);
 				roomPtr->infoData.EmplaceBack(&lifePacket, lifePacket.size);
+			}
 		}
 		break;
 	}
@@ -137,7 +144,8 @@ void Character::UpdateState(float fTime)
 				_playerInfo.curState = EState::IDLE;
 				_playerInfo.pos = _playerInfo.initialPos;
 				_playerInfo.animTime = 0.0f;
-				ChangeHP(_playerInfo.hpm);
+				_playerInfo.hitPoint = 1;
+				ChangeHP(CHARACTER_MAX_HP);
 
 				SC_PACKET_CHARACTER_INFO teleportPacket{ id,
 					_playerInfo.pos.x, _playerInfo.pos.y, _playerInfo.pos.z,
@@ -165,6 +173,7 @@ void Character::ChangeHP(int hp)
 
 void Character::GetDamage(UID attacker, int damage)
 {
+	++_playerInfo.hitPoint;
 	damage = (damage < _playerInfo.hp) ? damage : _playerInfo.hp;
 	int afterHP = _playerInfo.hp - damage;
 	if (0 <= afterHP)
