@@ -143,6 +143,7 @@ void DMRoom::UpdateCollider()
 		for (auto& chB : characterList)	// 맞는 플레이어
 		{
 			if (chA == chB) continue;	// 내 자신은 공격 못한다.
+			if (true == chB.IsInvincible()) continue;
 			if (true == CheckCollider(chA.GetAttackCollider(), chB.GetHitCollider())) // AttackColl, HitColl 충돌 체크
 			{
 				/* 피격체가 밀려나갈 방향 구하기 */
@@ -174,8 +175,11 @@ void DMRoom::UpdateCollider()
 				);
 
 				/* 피격체의 콜라이더를 피격당한상태로 바꾸고, 밀려날 위치를 부여한다. */
-				chB._playerInfo.curState = EState::IDLE;		//문제 있음 -> 이때 공격패킷오면 바로 반격 가능
-				chB.GetDamage(chA.id, 1);
+				if (false == chB.bomb)
+				{
+					chB._playerInfo.curState = EState::IDLE;		//문제 있음 -> 이때 공격패킷오면 바로 반격 가능
+					chB.GetDamage(chA.id, 1);
+				}
 
 				// 이펙트 소환 패킷 중계
 				SC_PACKET_SPAWN_EFFECT effectPacket{0, (int)EObjectType::HitEffect, chB._playerInfo.pos.x, chB._playerInfo.pos.y, chB._playerInfo.pos.z};
@@ -357,8 +361,7 @@ void DMRoom::QuitAllUser()
 	//벡터인데 앞부분부터 삭제함. 일단 있는 함수를 활용하지만 이후 개선 필요
 	SC_PACKET_CHANGE_SCENE changeScenePacket{ SCENE_MAIN };
 	for (auto& user : userList)
-	{
 		MiniGameServer::Instance().SendPacket(user, &changeScenePacket, changeScenePacket.size);
+	for (auto& user : userList)
 		Disconnect(user);
-	}
 }

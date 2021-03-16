@@ -49,6 +49,7 @@ struct FPlayerInfo {
 		int hp{ CHARACTER_MAX_HP };							//체력
 		float hitCount[3]{ 1.0f, 3.0f, 20.0f };				//밀려날 가중치
 		int hitPoint{ 1 };
+		float invincibleTime{ 0.0f };						//무적 타이머
 
 		float attackPower{ CHARACTER_ATTACK_POWER };			//공격력
 		float knockbackWeight{ CHARACTER_KNOCKBACK_WEIGHT };
@@ -89,6 +90,8 @@ struct Collider {
 class DMRoom;
 class Character
 {
+	friend DMRoom;
+
 public:
 	Character(size_t id, DMRoom* roomPtr);
 
@@ -126,10 +129,14 @@ public:
 	void GetDamage(UID attacker, int damage);
 	void SetAbility(unsigned char characterType);
 	bool IsAlive() { return 0 < _playerInfo.life; };
+	bool IsInvincible() { return INVINCIBLE_TIME > _playerInfo.invincibleTime; };
 
 private:
 	void KnockBack(float fTime);
 	void UpdatePos(float fTime);
 	void UpdateState(float fTime);
 	void ChangeHP(int hp);
+
+	bool bomb;
+	void UpdateBomb(float fTime);
 };

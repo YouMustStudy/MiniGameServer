@@ -85,11 +85,12 @@ private:
 	std::vector<Character> characterList{};	//플레이하는 '캐릭터' 컨테이너
 	std::vector<User*> userList{};			//플레이중인 '유저' 컨테이너
 
-	Vector3d initialPos[4]{					//캐릭터 시작위치
+	Vector3d initialPos[5]{					//캐릭터 시작위치
 		{-900.0f, -900.0f, 0.0f},
 		{900.0f, -900.0f, 0.0f},
 		{-900.0f, 900.0f, 0.0f},
-		{900.0f, 900.0f, 0.0f}
+		{900.0f, 900.0f, 0.0f},
+		{0.0f, 0.0f, 0.0f}
 	};
 
 	Collider mapCollider{MAP_WIDTH, MAP_HEIGHT, {0, 0, 0} };	//맵의 충돌객체, 낙사 판정 시 사용

@@ -13,7 +13,7 @@ void Character::Update(float fTime)
 	UpdateState(fTime);
 	if (true == GetHitCollider()._bAttacked)
 		KnockBack(fTime);
-	else if(EState::DIE != _playerInfo.curState
+	else if (EState::DIE != _playerInfo.curState
 		&& EState::FALL != _playerInfo.curState)
 		UpdatePos(fTime);
 }
@@ -74,6 +74,7 @@ void Character::SetAbility(unsigned char characterType)
 void Character::UpdateState(float fTime)
 {
 	_playerInfo.animTime += fTime;
+	_playerInfo.invincibleTime += fTime;
 	switch (_playerInfo.curState)
 	{
 	case EState::ATTACK_READY:
@@ -111,9 +112,9 @@ void Character::UpdateState(float fTime)
 			_playerInfo.animTime = 0.0f;
 			_playerInfo.dropSpeed = CHARACTER_DROP_SPEED;
 			_playerInfo.pos.z = DEATH_HEIGHT;
-
+			
 			SC_PACKET_CHARACTER_INFO teleportPacket{ id,
-		5555.0f, 5555.0f, _playerInfo.pos.z,
+		5555.0f, 5555.0f, DEATH_HEIGHT,
 		_playerInfo.dir.x, _playerInfo.dir.y, true };
 			//남은 목숨 수 중계
 			--_playerInfo.life;
@@ -137,6 +138,7 @@ void Character::UpdateState(float fTime)
 				_playerInfo.curState = EState::IDLE;
 				_playerInfo.pos = _playerInfo.initialPos;
 				_playerInfo.animTime = 0.0f;
+				_playerInfo.invincibleTime = 0.0f;
 				_playerInfo.hitPoint = 1;
 				ChangeHP(CHARACTER_MAX_HP);
 
@@ -155,25 +157,130 @@ void Character::UpdateState(float fTime)
 
 void Character::ChangeHP(int hp)
 {
-	if (0 <= hp)
+	if (false == bomb)
 	{
-		_playerInfo.hp = hp;
-		SC_PACKET_CHANGE_HP changeHPPacket{ id ,_playerInfo.hp };
-		if (nullptr != roomPtr)
-			roomPtr->eventData.EmplaceBack(&changeHPPacket, changeHPPacket.size);
+		if (0 <= hp)
+		{
+			_playerInfo.hp = hp;
+			SC_PACKET_CHANGE_HP changeHPPacket{ id ,_playerInfo.hp };
+			if (nullptr != roomPtr)
+				roomPtr->eventData.EmplaceBack(&changeHPPacket, changeHPPacket.size);
+		}
+	}
+}
+
+void Character::UpdateBomb(float fTime)
+{
+	_playerInfo.animTime += fTime;
+
+	
+
+	switch (_playerInfo.curState)
+	{
+	case EState::IDLE:
+	{
+		//일정시간마다 터짐
+		if (BOMB_EXPLOSIVE_TIME <= _playerInfo.animTime)
+		{
+			_playerInfo.animTime -= BOMB_EXPLOSIVE_TIME;
+			_playerInfo.curState = EState::ATTACK_READY;
+			SC_PACKET_ATTACK attackPacket{ id };
+			roomPtr->infoData.EmplaceBack(&attackPacket, attackPacket.size);
+		}
+		break;
+	}
+
+	case EState::ATTACK_READY:
+	{
+		if (ATK_READY_TIME <= _playerInfo.animTime)
+		{
+			//공격상태로 전이
+			_playerInfo.curState = EState::ATTACK;
+			_playerInfo.animTime -= ATK_READY_TIME;
+			_attackColl._enabled = true;
+		}
+		break;
+	}
+
+	case EState::ATTACK:
+	{
+		if (ATK_TIME <= _playerInfo.animTime)
+		{
+			//아이들 상태로 전이
+			_playerInfo.curState = EState::IDLE;
+			_playerInfo.animTime -= ATK_TIME;
+			_attackColl._enabled = false;
+		}
+		break;
+	}
+
+	case EState::FALL: //맵밖으로 떨어지는중
+	{
+		//일정시간마다 터짐
+		if (BOMB_EXPLOSIVE_TIME <= _playerInfo.animTime)
+		{
+			_playerInfo.animTime -= BOMB_EXPLOSIVE_TIME;
+			_playerInfo.curState = EState::ATTACK_READY;
+			SC_PACKET_ATTACK attackPacket{ id };
+			roomPtr->infoData.EmplaceBack(&attackPacket, attackPacket.size);
+		}
+
+		_playerInfo.dropSpeed += DROP_SPEED * fTime;
+		_playerInfo.pos.z -= _playerInfo.dropSpeed * fTime;
+		if (DEATH_HEIGHT >= _playerInfo.pos.z)
+		{
+			_playerInfo.curState = EState::DIE;
+			_hitColl._bAttacked = true;
+			_playerInfo.animTime = 0.0f;
+			_playerInfo.dropSpeed = CHARACTER_DROP_SPEED;
+			_playerInfo.pos.z = DEATH_HEIGHT;
+
+			SC_PACKET_CHARACTER_INFO teleportPacket{ id,
+			5555.0f, 5555.0f, DEATH_HEIGHT,
+			_playerInfo.dir.x, _playerInfo.dir.y, true };
+			if (nullptr != roomPtr)
+				roomPtr->infoData.EmplaceBack(&teleportPacket, teleportPacket.size);
+		}
+		break;
+	}
+
+	case EState::DIE: //리스폰 대기
+	{
+		if (0 < _playerInfo.life)
+		{
+			if (BOMB_RESPAWN_TIME <= _playerInfo.animTime)
+			{
+				_hitColl._bAttacked = false;
+				_playerInfo.curState = EState::IDLE;
+				_playerInfo.pos = _playerInfo.initialPos;
+				_playerInfo.animTime = 0.0f;
+
+				SC_PACKET_CHARACTER_INFO teleportPacket{ id,
+					_playerInfo.pos.x, _playerInfo.pos.y, _playerInfo.pos.z,
+					_playerInfo.dir.x, _playerInfo.dir.y, true };
+				if (nullptr != roomPtr)
+					roomPtr->infoData.EmplaceBack(&teleportPacket, teleportPacket.size);
+			}
+		}
+		break;
+	}
+
 	}
 }
 
 void Character::GetDamage(UID attacker, int damage)
 {
-	++_playerInfo.hitPoint;
-	damage = (damage < _playerInfo.hp) ? damage : _playerInfo.hp;
-	int afterHP = _playerInfo.hp - damage;
-	if (0 <= afterHP)
+	if (false == bomb)
 	{
-		_playerInfo.hp = afterHP;
-		SC_PACKET_CHANGE_HP changeHPPacket{ id ,_playerInfo.hp, attacker };
-		if (nullptr != roomPtr)
-			roomPtr->eventData.EmplaceBack(&changeHPPacket, changeHPPacket.size);
+		++_playerInfo.hitPoint;
+		damage = (damage < _playerInfo.hp) ? damage : _playerInfo.hp;
+		int afterHP = _playerInfo.hp - damage;
+		if (0 <= afterHP)
+		{
+			_playerInfo.hp = afterHP;
+			SC_PACKET_CHANGE_HP changeHPPacket{ id ,_playerInfo.hp, attacker };
+			if (nullptr != roomPtr)
+				roomPtr->eventData.EmplaceBack(&changeHPPacket, changeHPPacket.size);
+		}
 	}
 }
