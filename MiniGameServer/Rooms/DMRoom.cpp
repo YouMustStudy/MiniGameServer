@@ -18,13 +18,13 @@ DMRoom::~DMRoom()
 
 void DMRoom::Init()
 {
-	lastUpdateTime = std::chrono::high_resolution_clock::now();
 	characterList.clear();
 	userList.clear();
 	eventData.Clear();
 	infoData.Clear();
 	leftTime = DEFAULT_MATCH_TIME;
 	readyCount = 0;
+	bomb = Character((size_t)-1, this);
 }
 
 void DMRoom::ProcessJob(Job job)
@@ -106,6 +106,7 @@ void DMRoom::ProcessReady(UID uid)
 			//레디가 오기전에 유저 종료가 발생하면?
 			//디스커넥 쪽에서도 동일 처리 필요
 			Logger::Log("모든 유저 준비 완료, 게임 시작");
+			lastUpdateTime = std::chrono::high_resolution_clock::now();
 			MiniGameServer::Instance().AddEvent(queueType.second, EV_UPDATE, lastUpdateTime);
 		};
 	}
@@ -175,14 +176,11 @@ void DMRoom::UpdateCollider()
 				);
 
 				/* 피격체의 콜라이더를 피격당한상태로 바꾸고, 밀려날 위치를 부여한다. */
-				if (false == chB.bomb)
-				{
-					chB._playerInfo.curState = EState::IDLE;		//문제 있음 -> 이때 공격패킷오면 바로 반격 가능
-					chB.GetDamage(chA.id, 1);
-				}
+				chB._playerInfo.curState = EState::IDLE;		//문제 있음 -> 이때 공격패킷오면 바로 반격 가능
+				chB.GetDamage(chA.id, 1);
 
 				// 이펙트 소환 패킷 중계
-				SC_PACKET_SPAWN_EFFECT effectPacket{0, (int)EObjectType::HitEffect, chB._playerInfo.pos.x, chB._playerInfo.pos.y, chB._playerInfo.pos.z};
+				SC_PACKET_SPAWN_EFFECT effectPacket{ 0, (int)EObjectType::HitEffect, chB._playerInfo.pos.x, chB._playerInfo.pos.y, chB._playerInfo.pos.z };
 				eventData.EmplaceBack(&effectPacket, effectPacket.size);
 			}
 		}
@@ -248,12 +246,12 @@ void DMRoom::SendGameState()
 	//Send data to clients.
 	for (size_t i = 0; i < characterList.size(); ++i)
 	{
-		SC_PACKET_CHARACTER_INFO infoPacket{i, 
+		SC_PACKET_CHARACTER_INFO infoPacket{ i,
 			characterList[i]._playerInfo.pos.x, characterList[i]._playerInfo.pos.y, characterList[i]._playerInfo.pos.z,
-			characterList[i]._playerInfo.dir.x, characterList[i]._playerInfo.dir.y};
+			characterList[i]._playerInfo.dir.x, characterList[i]._playerInfo.dir.y };
 		infoData.EmplaceBack(&infoPacket, infoPacket.size);
 	}
-	
+
 	//이벤트 데이터 뒷부분에 통합.
 	eventData.EmplaceBack(infoData.data, infoData.len);
 	for (auto& user : userList)
@@ -278,7 +276,7 @@ void DMRoom::Regist(std::vector<User*> users)
 			characterList[i]._playerInfo.initialPos = initialPos[i % _countof(initialPos)];
 			characterList[i]._playerInfo.pos = characterList[i]._playerInfo.initialPos;
 			characterList[i].SetAbility(users[i]->characterType);
-			
+
 			SC_PACKET_UID packet{ i };
 			MiniGameServer::Instance().SendPacket(users[i], &packet);
 
@@ -286,6 +284,8 @@ void DMRoom::Regist(std::vector<User*> users)
 			eventData.EmplaceBack(&spawnCharacterPacket, spawnCharacterPacket.size);
 		}
 	}
+
+
 
 	// [스폰데이터 | 게임 시작 시그널] 전송
 	SC_PACKET_CHANGE_SCENE changeScenePacket{ SCENE_GAME };

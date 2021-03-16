@@ -25,9 +25,9 @@ struct AcceptInfo
 
 struct LoginInfo
 {
-	LoginInfo(size_t idx, const wchar_t* id, unsigned char characterType) : idx(idx), id(id), characterType(characterType) {};
+	LoginInfo(size_t idx, const char* id, unsigned char characterType) : idx(idx), id(id), characterType(characterType) {};
 	size_t idx;
-	std::wstring id;
+	std::string id;
 	unsigned char characterType;
 };
 
@@ -55,7 +55,7 @@ private:
 	void DisconnectUser(size_t idx);
 
 	std::array<User, MAX_USER_SIZE> userList;
-	std::unordered_set<std::wstring> userIDSet;
+	std::unordered_set<std::string> userIDSet;
 	std::stack<size_t> indexPool;
 	HANDLE workerIOCP{INVALID_HANDLE_VALUE};
 

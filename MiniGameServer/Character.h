@@ -136,7 +136,4 @@ private:
 	void UpdatePos(float fTime);
 	void UpdateState(float fTime);
 	void ChangeHP(int hp);
-
-	bool bomb;
-	void UpdateBomb(float fTime);
 };

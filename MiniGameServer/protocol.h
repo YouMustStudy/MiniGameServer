@@ -53,7 +53,7 @@ using PACKET_TYPE = unsigned char;
 using PACKET_SIZE = unsigned short;
 using UID = size_t;
 using SCENETYPE = unsigned char;
-constexpr size_t NAME_LENGTH = 6;
+constexpr size_t NAME_LENGTH = 20;
 
 #pragma pack(1)
 class DEFAULT_PACKET
@@ -158,20 +158,20 @@ public:
 class SC_PACKET_SPAWN_CHARACTER : public DEFAULT_PACKET
 {
 public:
-	SC_PACKET_SPAWN_CHARACTER(UID uid, unsigned char characterType, const std::wstring& userName, float x, float y) : uid(uid), characterType(characterType)
+	SC_PACKET_SPAWN_CHARACTER(UID uid, unsigned char characterType, const std::string& userName, float x, float y) : uid(uid), characterType(characterType)
 	{
 		size = sizeof(SC_PACKET_SPAWN_CHARACTER);
 		type = SC_SPAWN_CHARACTER;
 		pos[0] = x;
 		pos[1] = y;
 
-		wcscpy_s<NAME_LENGTH+1>(name, userName.c_str());
+		strcpy_s<NAME_LENGTH+1>(name, userName.c_str());
 		/*size_t copyLen = (userName.size() < NAME_LENGTH) ? userName.size() : NAME_LENGTH;
 		memcpy(this->name, userName.c_str(), sizeof(wchar_t) * copyLen);*/
 	};
 	UID uid{};
 	unsigned char characterType{};
-	wchar_t name[NAME_LENGTH + 1]{};
+	char name[NAME_LENGTH + 1]{};
 	float pos[2]{};
 };
 
@@ -277,7 +277,7 @@ public:
 		size = sizeof(CS_PACKET_REQUEST_LOGIN);
 		type = CS_REQUEST_LOGIN;
 	};
-	wchar_t name[NAME_LENGTH + 1]{};
+	char name[NAME_LENGTH + 1]{};
 	unsigned char characterType{};
 };
 
