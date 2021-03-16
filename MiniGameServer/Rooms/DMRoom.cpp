@@ -319,8 +319,8 @@ void DMRoom::QuitAllUser()
 	//벡터인데 앞부분부터 삭제함. 일단 있는 함수를 활용하지만 이후 개선 필요
 	SC_PACKET_CHANGE_SCENE changeScenePacket{ SCENE_MAIN };
 	for (auto& user : userList)
-	{
 		MiniGameServer::Instance().SendPacket(user, &changeScenePacket, changeScenePacket.size);
+
+	for (auto& user : userList)
 		Disconnect(user);
-	}
 }

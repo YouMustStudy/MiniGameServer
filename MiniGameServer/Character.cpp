@@ -44,28 +44,28 @@ void Character::SetAbility(unsigned char characterType)
 {
 	switch (characterType)
 	{
-	case 0:
+	case 0: // 인간
 		_playerInfo.knockbackWeight *= 1.0f;
 		_playerInfo.attackPower *= 1.0f;
 		_playerInfo.moveSpeed *= 1.0f;
 		break;
 
-	case 1:
-		_playerInfo.knockbackWeight *= 1.0f;
+	case 1: // 엘프
+		_playerInfo.knockbackWeight *= 1.25f;
 		_playerInfo.attackPower *= 0.8f;
-		_playerInfo.moveSpeed *= 1.2f;
+		_playerInfo.moveSpeed *= 1.4f;
 		break;
 
-	case 2:
+	case 2: // 드워프
 		_playerInfo.knockbackWeight *= 1.67f;
 		_playerInfo.attackPower *= 1.4f;
 		_playerInfo.moveSpeed *= 0.8f;
 		break;
 
-	case 3:
-		_playerInfo.knockbackWeight *= 1.25f;
+	case 3: // 다크엘프
+		_playerInfo.knockbackWeight *= 1.0f;
 		_playerInfo.attackPower *= 0.8f;
-		_playerInfo.moveSpeed *= 1.4f;
+		_playerInfo.moveSpeed *= 1.2f;
 		break;
 	}
 }
@@ -76,7 +76,7 @@ void Character::UpdateState(float fTime)
 	static constexpr float ATK_READY_TIME = 0.1333333f;		//공격준비 프레임은 15fps 기준으로 2프레임
 	static constexpr float ATK_TIME = 0.3333333f;			//공격 프레임은 15fps 기준으로 5프레임
 	static const float DROP_SPEED = 5000.0f;				// 중력
-	static const float DEATH_HEIGHT = -500.0f;				// 죽는 높이
+	static const float DEATH_HEIGHT = -1500.0f;				// 죽는 높이
 	static const float RESPAWN_TIME = 3.0f;					//리스폰 시간
 
 	_playerInfo.animTime += fTime;
