@@ -112,17 +112,22 @@ void Character::UpdateState(float fTime)
 			_playerInfo.animTime = 0.0f;
 			_playerInfo.dropSpeed = CHARACTER_DROP_SPEED;
 			_playerInfo.pos.z = DEATH_HEIGHT;
-
+			_playerInfo.pos.x = 5555.0f;
+			_playerInfo.pos.y = 5555.0f;
 			SC_PACKET_CHARACTER_INFO teleportPacket{ id,
-		5555.0f, 5555.0f, DEATH_HEIGHT,
-		_playerInfo.dir.x, _playerInfo.dir.y, true };
-			//남은 목숨 수 중계
-			--_playerInfo.life;
-			SC_PACKET_CHANGE_LIFE lifePacket{ id, _playerInfo.life };
+			5555.0f, 5555.0f, DEATH_HEIGHT,
+			_playerInfo.dir.x, _playerInfo.dir.y, true };
+
 			if (nullptr != roomPtr)
-			{
 				roomPtr->infoData.EmplaceBack(&teleportPacket, teleportPacket.size);
-				roomPtr->infoData.EmplaceBack(&lifePacket, lifePacket.size);
+			
+			//남은 목숨 수 중계
+			if (0 < _playerInfo.life)
+			{
+				--_playerInfo.life;
+				SC_PACKET_CHANGE_LIFE lifePacket{ id, _playerInfo.life };
+				if (nullptr != roomPtr)
+					roomPtr->infoData.EmplaceBack(&lifePacket, lifePacket.size);
 			}
 		}
 		break;

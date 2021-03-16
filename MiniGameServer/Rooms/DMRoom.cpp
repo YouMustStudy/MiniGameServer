@@ -285,8 +285,6 @@ void DMRoom::Regist(std::vector<User*> users)
 		}
 	}
 
-
-
 	// [스폰데이터 | 게임 시작 시그널] 전송
 	SC_PACKET_CHANGE_SCENE changeScenePacket{ SCENE_GAME };
 	eventData.EmplaceBack(&changeScenePacket, changeScenePacket.size);
