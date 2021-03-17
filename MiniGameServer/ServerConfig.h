@@ -26,6 +26,7 @@ constexpr float CHARACTER_DROP_SPEED = 100.0f;				//캐릭터 기본 낙하속도
 constexpr float CHARACTER_MOVE_SPEED = 1000.0f;				//캐릭터 기본 이동속도
 constexpr float CHARACTER_KNOCKBACK_WEIGHT = 1.0f;			//캐릭터 넉백 가중치
 constexpr float CHARACTER_ATTACK_POWER = 200.0f;			//캐릭터 공격력
+constexpr float INVINCIBLE_TIME = 1.0f;
 
 constexpr char CHARACTER_LIFE = 3;							//캐릭터 목숨
 constexpr int CHARACTER_MAX_HP = 3;							//캐릭터 생명력
@@ -35,3 +36,5 @@ constexpr float ATK_TIME = 0.3333333f;				//공격 프레임은 15fps 기준으로 5프레임
 constexpr float DROP_SPEED = 5000.0f;				//중력
 constexpr float DEATH_HEIGHT = -1000.0f;			//죽는 높이
 constexpr float RESPAWN_TIME = 0.0f;				//리스폰 시간
+
+constexpr float WAIT_RESPAWN_SPACE = 5555.5f;	//캐릭터가 죽었을 때 잠깐 숨길 공간의 좌표(언리얼 KILLZ에 포함되면 안됨)

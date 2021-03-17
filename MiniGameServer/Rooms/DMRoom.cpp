@@ -18,7 +18,6 @@ DMRoom::~DMRoom()
 
 void DMRoom::Init()
 {
-	lastUpdateTime = std::chrono::high_resolution_clock::now();
 	characterList.clear();
 	userList.clear();
 	eventData.Clear();
@@ -90,8 +89,9 @@ void DMRoom::ProcessMoveDir(MoveDirInfo* info)
 	if (nullptr == info) return;
 	if (characterList[info->uid]._playerInfo.curState == EState::ATTACK_READY ||
 		characterList[info->uid]._hitColl._bAttacked == true) return; // 어택상태이거나, 피격중이면 클라로부터 컨트롤러값 안받음
-	characterList[info->uid]._playerInfo.dir.x = info->x;
-	characterList[info->uid]._playerInfo.dir.y = info->y;
+
+	Vector3d newDir{ info->x, info->y, 0.0f };
+	characterList[info->uid]._playerInfo.dir = newDir.normalize();
 	delete info;
 }
 
@@ -106,6 +106,7 @@ void DMRoom::ProcessReady(UID uid)
 			//레디가 오기전에 유저 종료가 발생하면?
 			//디스커넥 쪽에서도 동일 처리 필요
 			Logger::Log("모든 유저 준비 완료, 게임 시작");
+			lastUpdateTime = std::chrono::high_resolution_clock::now();
 			MiniGameServer::Instance().AddEvent(queueType.second, EV_UPDATE, lastUpdateTime);
 		};
 	}
@@ -118,8 +119,8 @@ void DMRoom::UpdateLeftTime()
 	//1초단위로 클라/서버 간 남은 시간 동기화
 	if (1.0f <= oldTime)
 	{
-		unsigned int oldSecTime = static_cast<int>(oldTime);
-		unsigned int curSecTime = static_cast<int>(leftTime);
+		TIME_TYPE oldSecTime = static_cast<TIME_TYPE>(oldTime);
+		TIME_TYPE curSecTime = static_cast<TIME_TYPE>(leftTime);
 		if (curSecTime != oldSecTime)
 		{
 			SC_PACKET_TIME timePacket{ curSecTime };
@@ -143,8 +144,13 @@ void DMRoom::UpdateCollider()
 		for (auto& chB : characterList)	// 맞는 플레이어
 		{
 			if (chA == chB) continue;	// 내 자신은 공격 못한다.
+			if (true == chB.IsInvincible()) continue;
 			if (true == CheckCollider(chA.GetAttackCollider(), chB.GetHitCollider())) // AttackColl, HitColl 충돌 체크
 			{
+				/* 피격체의 콜라이더를 피격당한상태로 바꾸고, 밀려날 위치를 부여한다. */
+				chB._playerInfo.curState = EState::IDLE;		//문제 있음 -> 이때 공격패킷오면 바로 반격 가능
+				chB.GetDamage(chA.id);
+
 				/* 피격체가 밀려나갈 방향 구하기 */
 				Vector3d disVec = chB._playerInfo.pos - chA._playerInfo.pos;
 
@@ -159,26 +165,15 @@ void DMRoom::UpdateCollider()
 				//넉백 위치 부여
 				chB.GetHitCollider()._bAttacked = true;
 
-				//하트버전
-				//chB.GetHitCollider()._attackedPos = Vector3d(
-				//	chB._playerInfo.pos.x + (chB._playerInfo.knockbackWeight * chB._playerInfo.hitCount[chB._playerInfo.hpm - chB._playerInfo.hp] * chA._playerInfo.attackPower * disVec.x),
-				//	chB._playerInfo.pos.y + (chB._playerInfo.knockbackWeight * chB._playerInfo.hitCount[chB._playerInfo.hpm - chB._playerInfo.hp] * chA._playerInfo.attackPower * disVec.y),
-				//	chB._playerInfo.pos.z
-				//);
-
 				//스택버전
 				chB.GetHitCollider()._attackedPos = Vector3d(
-					chB._playerInfo.pos.x + (chB._playerInfo.knockbackWeight * chB._playerInfo.hitPoint * chA._playerInfo.attackPower * disVec.x),
-					chB._playerInfo.pos.y + (chB._playerInfo.knockbackWeight * chB._playerInfo.hitPoint * chA._playerInfo.attackPower * disVec.y),
+					chB._playerInfo.pos.x + (chB._playerInfo.knockbackWeight * (chB._playerInfo.hitPoint) * chA._playerInfo.attackPower * disVec.x),
+					chB._playerInfo.pos.y + (chB._playerInfo.knockbackWeight * (chB._playerInfo.hitPoint) * chA._playerInfo.attackPower * disVec.y),
 					chB._playerInfo.pos.z
 				);
 
-				/* 피격체의 콜라이더를 피격당한상태로 바꾸고, 밀려날 위치를 부여한다. */
-				chB._playerInfo.curState = EState::IDLE;		//문제 있음 -> 이때 공격패킷오면 바로 반격 가능
-				chB.GetDamage(chA.id, 1);
-
 				// 이펙트 소환 패킷 중계
-				SC_PACKET_SPAWN_EFFECT effectPacket{0, (int)EObjectType::HitEffect, chB._playerInfo.pos.x, chB._playerInfo.pos.y, chB._playerInfo.pos.z};
+				SC_PACKET_SPAWN_EFFECT effectPacket{ 0, (int)EObjectType::HitEffect, chB._playerInfo.pos.x, chB._playerInfo.pos.y, chB._playerInfo.pos.z };
 				eventData.EmplaceBack(&effectPacket, effectPacket.size);
 			}
 		}
@@ -244,12 +239,12 @@ void DMRoom::SendGameState()
 	//Send data to clients.
 	for (size_t i = 0; i < characterList.size(); ++i)
 	{
-		SC_PACKET_CHARACTER_INFO infoPacket{i, 
+		SC_PACKET_CHARACTER_INFO infoPacket{ (UID)i,
 			characterList[i]._playerInfo.pos.x, characterList[i]._playerInfo.pos.y, characterList[i]._playerInfo.pos.z,
-			characterList[i]._playerInfo.dir.x, characterList[i]._playerInfo.dir.y};
+			characterList[i]._playerInfo.dir.x, characterList[i]._playerInfo.dir.y };
 		infoData.EmplaceBack(&infoPacket, infoPacket.size);
 	}
-	
+
 	//이벤트 데이터 뒷부분에 통합.
 	eventData.EmplaceBack(infoData.data, infoData.len);
 	for (auto& user : userList)
@@ -269,16 +264,16 @@ void DMRoom::Regist(std::vector<User*> users)
 		{
 			users[i]->roomPtr = this;
 			userList.emplace_back(users[i]);
-			characterList.emplace_back(i, this);
+			characterList.emplace_back((UID)i, this);
 
 			characterList[i]._playerInfo.initialPos = initialPos[i % _countof(initialPos)];
 			characterList[i]._playerInfo.pos = characterList[i]._playerInfo.initialPos;
 			characterList[i].SetAbility(users[i]->characterType);
-			
-			SC_PACKET_UID packet{ i };
+
+			SC_PACKET_UID packet{ (UID)i };
 			MiniGameServer::Instance().SendPacket(users[i], &packet);
 
-			SC_PACKET_SPAWN_CHARACTER spawnCharacterPacket{ i, users[i]->characterType, users[i]->id, characterList[i]._playerInfo.initialPos.x, characterList[i]._playerInfo.initialPos.y };
+			SC_PACKET_SPAWN_CHARACTER spawnCharacterPacket{ (UID)i, users[i]->characterType, users[i]->id, characterList[i]._playerInfo.initialPos.x, characterList[i]._playerInfo.initialPos.y };
 			eventData.EmplaceBack(&spawnCharacterPacket, spawnCharacterPacket.size);
 		}
 	}
@@ -302,7 +297,7 @@ void DMRoom::Disconnect(User* user)
 		if (iter != userList.end())
 		{
 			//레디 시그널이 오기 전 종료라면? 확인해보자
-			UID uid = std::distance(userList.begin(), iter);
+			UID uid = (UID)std::distance(userList.begin(), iter);
 			ProcessReady(uid);
 
 			//유저 삭제처리
@@ -358,7 +353,6 @@ void DMRoom::QuitAllUser()
 	SC_PACKET_CHANGE_SCENE changeScenePacket{ SCENE_MAIN };
 	for (auto& user : userList)
 		MiniGameServer::Instance().SendPacket(user, &changeScenePacket, changeScenePacket.size);
-
 	for (auto& user : userList)
 		Disconnect(user);
 }

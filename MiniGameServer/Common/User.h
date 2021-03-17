@@ -28,7 +28,7 @@ public:
 
 	int state{ST_DISCONN};
 	UID uid{ (UID)-1 };								 ///< uid
-	std::wstring id;
+	std::string id;
 	unsigned char characterType{};
 	class DMRoom* roomPtr{nullptr};
 

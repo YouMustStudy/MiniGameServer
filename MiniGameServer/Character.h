@@ -38,7 +38,6 @@ enum class EObjectType : unsigned char {
 
 // 플레이어 정보
 struct FPlayerInfo {
-		int id{};						// 네트워크 id
 		bool isReady{ false };			// 로딩 완료여부
 
 		Vector3d pos{};					//x좌표
@@ -46,16 +45,14 @@ struct FPlayerInfo {
 		Vector3d dir{};					//방향
 
 		char life{ CHARACTER_LIFE };						//목숨
-		int hp{ CHARACTER_MAX_HP };							//체력
-		float hitCount[3]{ 1.0f, 3.0f, 20.0f };				//밀려날 가중치
-		int hitPoint{ 1 };
+		int hitPoint{ 0 };
+		float invincibleTime{ INVINCIBLE_TIME };			//무적 타이머
 
 		float attackPower{ CHARACTER_ATTACK_POWER };			//공격력
 		float knockbackWeight{ CHARACTER_KNOCKBACK_WEIGHT };
 		float moveSpeed{ CHARACTER_MOVE_SPEED };				//이동속도
 		float dropSpeed{ CHARACTER_DROP_SPEED };
 
-		
 		ESpriteType	sprite{};			//sprite 종류
 		EWeaponType 	curWeapon{};	// 현재 무기
 		EState		curState{};			//현재 상태
@@ -89,8 +86,10 @@ struct Collider {
 class DMRoom;
 class Character
 {
+	friend DMRoom;
+
 public:
-	Character(size_t id, DMRoom* roomPtr);
+	Character(UID id, DMRoom* roomPtr);
 
 public:
 	// 캐릭터 현재 상태 얻기
@@ -118,18 +117,19 @@ public:
 	FPlayerInfo _playerInfo;	// 플레이어 정보
 	Collider _hitColl;			// 피격 콜라이더
 	Collider _attackColl;		// 공격 콜라이더
-	size_t id{(size_t)-1};
-	DMRoom* roomPtr{nullptr};
+	UID id{(UID)-1};			// UID
+	DMRoom* roomPtr{nullptr};	// 방에 작업 추가용 포인터
 
 	bool operator==(const Character& other) { return id == other.id; };
-	void Update(float fTime);
-	void GetDamage(UID attacker, int damage);
-	void SetAbility(unsigned char characterType);
-	bool IsAlive() { return 0 < _playerInfo.life; };
-
+	void Update(float fTime);	//캐릭터 업데이트
+	void GetDamage(UID attacker);	//데미지 처리
+	void SetAbility(CHARACTER_TYPE characterType);	//캐릭터 타입에 대한 초기스텟 설정
+	bool IsAlive() { return 0 < _playerInfo.life; };	//이 캐릭터가 살아있는가?
+	bool IsInvincible() { return INVINCIBLE_TIME > _playerInfo.invincibleTime; };	//이 캐릭터가 무적인가?
+	
 private:
 	void KnockBack(float fTime);
 	void UpdatePos(float fTime);
 	void UpdateState(float fTime);
-	void ChangeHP(int hp);
+	void ChangeHitPoint(int point);
 };

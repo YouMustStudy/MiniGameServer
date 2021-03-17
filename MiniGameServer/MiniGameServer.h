@@ -26,7 +26,6 @@ class MiniGameServer
 {
 private:
 	size_t NUM_THREADS{ THREAD_NUM };
-	short SERVER_PORT{ SERVER_PORT };
 
 	std::atomic<int> m_playerNum;		///< 총 접속 인원 수
 	HANDLE m_iocp;						///< 작업 스레드용 IOCP 핸들

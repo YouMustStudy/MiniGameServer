@@ -45,14 +45,13 @@ void UserManager::ProcessJob(Job job)
 
 UserManager::UserManager()
 {
-	userIDSet.clear();
 	queueType = { static_cast<size_t>(GlobalQueueType::USER_MANAGER), 0 };
 	//인덱스 풀 초기화.
 	for (size_t idx = 1; MAX_USER_SIZE >= idx ; ++idx)
 		indexPool.push(MAX_USER_SIZE - idx);
 	//유저 초기화
 	for (size_t idx = 0; MAX_USER_SIZE > idx; ++idx)
-		userList[idx].uid = idx;
+		userList[idx].uid = (UID)idx;
 }
 
 void UserManager::ProcessAccept(AcceptInfo* info)
@@ -144,7 +143,6 @@ void UserManager::ProcessLogin(LoginInfo* info)
 	userList[reqUser].id = info->id;
 	userList[reqUser].state = ST_IDLE;
 	userList[reqUser].characterType = info->characterType;
-	userIDSet.emplace(info->id);
 	Logger::Log("유저 로그인 성공");
 
 	SC_PACKET_LOGIN_OK packet;
@@ -215,7 +213,6 @@ void UserManager::DisconnectUser(size_t idx)
 	{
 		closesocket(userList[idx].socket);
 		userList[idx].socket = INVALID_SOCKET;
-		userIDSet.erase(userList[idx].id);
 		char nameBuf[INET_ADDRSTRLEN]{ 0, };
 		inet_ntop(AF_INET, &userList[idx].addr.sin_addr, nameBuf, INET_ADDRSTRLEN);
 		Logger::Log("유저 종료 : " + std::string(nameBuf) + ":" + std::to_string(userList[idx].addr.sin_port));
