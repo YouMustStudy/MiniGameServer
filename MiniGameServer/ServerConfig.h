@@ -26,7 +26,7 @@ constexpr float CHARACTER_DROP_SPEED = 100.0f;				//캐릭터 기본 낙하속도
 constexpr float CHARACTER_MOVE_SPEED = 1000.0f;				//캐릭터 기본 이동속도
 constexpr float CHARACTER_KNOCKBACK_WEIGHT = 1.0f;			//캐릭터 넉백 가중치
 constexpr float CHARACTER_ATTACK_POWER = 200.0f;			//캐릭터 공격력
-constexpr float INVINCIBLE_TIME = 3.0f;
+constexpr float INVINCIBLE_TIME = 1.0f;
 
 constexpr char CHARACTER_LIFE = 3;							//캐릭터 목숨
 constexpr int CHARACTER_MAX_HP = 3;							//캐릭터 생명력

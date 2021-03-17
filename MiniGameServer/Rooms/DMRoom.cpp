@@ -89,8 +89,9 @@ void DMRoom::ProcessMoveDir(MoveDirInfo* info)
 	if (nullptr == info) return;
 	if (characterList[info->uid]._playerInfo.curState == EState::ATTACK_READY ||
 		characterList[info->uid]._hitColl._bAttacked == true) return; // 어택상태이거나, 피격중이면 클라로부터 컨트롤러값 안받음
-	characterList[info->uid]._playerInfo.dir.x = info->x;
-	characterList[info->uid]._playerInfo.dir.y = info->y;
+
+	Vector3d newDir{ info->x, info->y, 0.0f };
+	characterList[info->uid]._playerInfo.dir = newDir.normalize();
 	delete info;
 }
 
