@@ -37,4 +37,4 @@ constexpr float DROP_SPEED = 5000.0f;				//중력
 constexpr float DEATH_HEIGHT = -1000.0f;			//죽는 높이
 constexpr float RESPAWN_TIME = 0.0f;				//리스폰 시간
 
-constexpr float WAIT_RESPAWN_SPACE = 5555.5f;
+constexpr float WAIT_RESPAWN_SPACE = 5555.5f;	//캐릭터가 죽었을 때 잠깐 숨길 공간의 좌표(언리얼 KILLZ에 포함되면 안됨)

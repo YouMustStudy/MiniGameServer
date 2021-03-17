@@ -139,6 +139,7 @@ void Character::UpdateState(float fTime)
 		{
 			if (RESPAWN_TIME <= _playerInfo.animTime)
 			{
+				//¸®½ºÆù
 				_hitColl._bAttacked = false;
 				_playerInfo.curState = EState::IDLE;
 				_playerInfo.pos = _playerInfo.initialPos;

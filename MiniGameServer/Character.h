@@ -121,11 +121,11 @@ public:
 	DMRoom* roomPtr{nullptr};	// 방에 작업 추가용 포인터
 
 	bool operator==(const Character& other) { return id == other.id; };
-	void Update(float fTime);
-	void GetDamage(UID attacker);
-	void SetAbility(unsigned char characterType);
-	bool IsAlive() { return 0 < _playerInfo.life; };
-	bool IsInvincible() { return INVINCIBLE_TIME > _playerInfo.invincibleTime; };
+	void Update(float fTime);	//캐릭터 업데이트
+	void GetDamage(UID attacker);	//데미지 처리
+	void SetAbility(CHARACTER_TYPE characterType);	//캐릭터 타입에 대한 초기스텟 설정
+	bool IsAlive() { return 0 < _playerInfo.life; };	//이 캐릭터가 살아있는가?
+	bool IsInvincible() { return INVINCIBLE_TIME > _playerInfo.invincibleTime; };	//이 캐릭터가 무적인가?
 	
 private:
 	void KnockBack(float fTime);
