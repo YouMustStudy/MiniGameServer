@@ -321,13 +321,13 @@ void DMRoom::End()
 
 bool DMRoom::EndCheck()
 {
-	//int leftUserNum = 0;
-	//for (auto& ch : characterList)
-	//	if (true == ch.IsAlive())
-	//		++leftUserNum;
+	int leftUserNum = 0;
+	for (auto& ch : characterList)
+		if (true == ch.IsAlive())
+			++leftUserNum;
 
-	//if (1 == leftUserNum)
-	//	return true;
+	if (1 == leftUserNum)
+		return true;
 
 	//제한시간이 다 소모되면 게임 종료
 	if (0 >= leftTime)
