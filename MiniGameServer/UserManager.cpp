@@ -52,7 +52,7 @@ UserManager::UserManager()
 		indexPool.push(MAX_USER_SIZE - idx);
 	//유저 초기화
 	for (size_t idx = 0; MAX_USER_SIZE > idx; ++idx)
-		userList[idx].uid = idx;
+		userList[idx].uid = (UID)idx;
 }
 
 void UserManager::ProcessAccept(AcceptInfo* info)

@@ -24,7 +24,6 @@ void DMRoom::Init()
 	infoData.Clear();
 	leftTime = DEFAULT_MATCH_TIME;
 	readyCount = 0;
-	bomb = Character((size_t)-1, this);
 }
 
 void DMRoom::ProcessJob(Job job)
@@ -119,8 +118,8 @@ void DMRoom::UpdateLeftTime()
 	//1초단위로 클라/서버 간 남은 시간 동기화
 	if (1.0f <= oldTime)
 	{
-		unsigned int oldSecTime = static_cast<int>(oldTime);
-		unsigned int curSecTime = static_cast<int>(leftTime);
+		TIME_TYPE oldSecTime = static_cast<TIME_TYPE>(oldTime);
+		TIME_TYPE curSecTime = static_cast<TIME_TYPE>(leftTime);
 		if (curSecTime != oldSecTime)
 		{
 			SC_PACKET_TIME timePacket{ curSecTime };
@@ -147,6 +146,10 @@ void DMRoom::UpdateCollider()
 			if (true == chB.IsInvincible()) continue;
 			if (true == CheckCollider(chA.GetAttackCollider(), chB.GetHitCollider())) // AttackColl, HitColl 충돌 체크
 			{
+				/* 피격체의 콜라이더를 피격당한상태로 바꾸고, 밀려날 위치를 부여한다. */
+				chB._playerInfo.curState = EState::IDLE;		//문제 있음 -> 이때 공격패킷오면 바로 반격 가능
+				chB.GetDamage(chA.id);
+
 				/* 피격체가 밀려나갈 방향 구하기 */
 				Vector3d disVec = chB._playerInfo.pos - chA._playerInfo.pos;
 
@@ -161,23 +164,12 @@ void DMRoom::UpdateCollider()
 				//넉백 위치 부여
 				chB.GetHitCollider()._bAttacked = true;
 
-				//하트버전
-				//chB.GetHitCollider()._attackedPos = Vector3d(
-				//	chB._playerInfo.pos.x + (chB._playerInfo.knockbackWeight * chB._playerInfo.hitCount[chB._playerInfo.hpm - chB._playerInfo.hp] * chA._playerInfo.attackPower * disVec.x),
-				//	chB._playerInfo.pos.y + (chB._playerInfo.knockbackWeight * chB._playerInfo.hitCount[chB._playerInfo.hpm - chB._playerInfo.hp] * chA._playerInfo.attackPower * disVec.y),
-				//	chB._playerInfo.pos.z
-				//);
-
 				//스택버전
 				chB.GetHitCollider()._attackedPos = Vector3d(
-					chB._playerInfo.pos.x + (chB._playerInfo.knockbackWeight * chB._playerInfo.hitPoint * chA._playerInfo.attackPower * disVec.x),
-					chB._playerInfo.pos.y + (chB._playerInfo.knockbackWeight * chB._playerInfo.hitPoint * chA._playerInfo.attackPower * disVec.y),
+					chB._playerInfo.pos.x + (chB._playerInfo.knockbackWeight * (chB._playerInfo.hitPoint) * chA._playerInfo.attackPower * disVec.x),
+					chB._playerInfo.pos.y + (chB._playerInfo.knockbackWeight * (chB._playerInfo.hitPoint) * chA._playerInfo.attackPower * disVec.y),
 					chB._playerInfo.pos.z
 				);
-
-				/* 피격체의 콜라이더를 피격당한상태로 바꾸고, 밀려날 위치를 부여한다. */
-				chB._playerInfo.curState = EState::IDLE;		//문제 있음 -> 이때 공격패킷오면 바로 반격 가능
-				chB.GetDamage(chA.id, 1);
 
 				// 이펙트 소환 패킷 중계
 				SC_PACKET_SPAWN_EFFECT effectPacket{ 0, (int)EObjectType::HitEffect, chB._playerInfo.pos.x, chB._playerInfo.pos.y, chB._playerInfo.pos.z };
@@ -246,7 +238,7 @@ void DMRoom::SendGameState()
 	//Send data to clients.
 	for (size_t i = 0; i < characterList.size(); ++i)
 	{
-		SC_PACKET_CHARACTER_INFO infoPacket{ i,
+		SC_PACKET_CHARACTER_INFO infoPacket{ (UID)i,
 			characterList[i]._playerInfo.pos.x, characterList[i]._playerInfo.pos.y, characterList[i]._playerInfo.pos.z,
 			characterList[i]._playerInfo.dir.x, characterList[i]._playerInfo.dir.y };
 		infoData.EmplaceBack(&infoPacket, infoPacket.size);
@@ -271,16 +263,16 @@ void DMRoom::Regist(std::vector<User*> users)
 		{
 			users[i]->roomPtr = this;
 			userList.emplace_back(users[i]);
-			characterList.emplace_back(i, this);
+			characterList.emplace_back((UID)i, this);
 
 			characterList[i]._playerInfo.initialPos = initialPos[i % _countof(initialPos)];
 			characterList[i]._playerInfo.pos = characterList[i]._playerInfo.initialPos;
 			characterList[i].SetAbility(users[i]->characterType);
 
-			SC_PACKET_UID packet{ i };
+			SC_PACKET_UID packet{ (UID)i };
 			MiniGameServer::Instance().SendPacket(users[i], &packet);
 
-			SC_PACKET_SPAWN_CHARACTER spawnCharacterPacket{ i, users[i]->characterType, users[i]->id, characterList[i]._playerInfo.initialPos.x, characterList[i]._playerInfo.initialPos.y };
+			SC_PACKET_SPAWN_CHARACTER spawnCharacterPacket{ (UID)i, users[i]->characterType, users[i]->id, characterList[i]._playerInfo.initialPos.x, characterList[i]._playerInfo.initialPos.y };
 			eventData.EmplaceBack(&spawnCharacterPacket, spawnCharacterPacket.size);
 		}
 	}
@@ -304,7 +296,7 @@ void DMRoom::Disconnect(User* user)
 		if (iter != userList.end())
 		{
 			//레디 시그널이 오기 전 종료라면? 확인해보자
-			UID uid = std::distance(userList.begin(), iter);
+			UID uid = (UID)std::distance(userList.begin(), iter);
 			ProcessReady(uid);
 
 			//유저 삭제처리

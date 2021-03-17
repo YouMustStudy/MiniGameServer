@@ -49,19 +49,21 @@ enum SCENE_TYPE
 	SCENE_GAME
 };
 
+//타입 정의
 using PACKET_TYPE = uint8_t;
 using PACKET_SIZE = uint16_t;
 using UID = size_t;
 using SCENETYPE = uint8_t;
 using CHARACTER_TYPE = uint8_t;
+using TIME_TYPE = uint16_t;
 constexpr size_t NAME_LENGTH = 20;
 
 #pragma pack(1)
 class DEFAULT_PACKET
 {
 public:
-	PACKET_SIZE size{0};
-	PACKET_TYPE type{0};
+	PACKET_SIZE size{sizeof(DEFAULT_PACKET)};
+	PACKET_TYPE type{(PACKET_TYPE)-1};
 };
 
 class SC_PACKET_CONNECT_OK : public DEFAULT_PACKET
@@ -148,12 +150,12 @@ public:
 class SC_PACKET_TIME : public DEFAULT_PACKET
 {
 public:
-	SC_PACKET_TIME(uint32_t time) : time(time)
+	SC_PACKET_TIME(TIME_TYPE time) : time(time)
 	{
 		size = sizeof(SC_PACKET_TIME);
 		type = SC_TIME;
 	};
-	uint32_t time;
+	TIME_TYPE time;
 };
 
 class SC_PACKET_SPAWN_CHARACTER : public DEFAULT_PACKET

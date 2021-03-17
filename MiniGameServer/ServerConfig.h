@@ -36,3 +36,5 @@ constexpr float ATK_TIME = 0.3333333f;				//공격 프레임은 15fps 기준으로 5프레임
 constexpr float DROP_SPEED = 5000.0f;				//중력
 constexpr float DEATH_HEIGHT = -1000.0f;			//죽는 높이
 constexpr float RESPAWN_TIME = 0.0f;				//리스폰 시간
+
+constexpr float WAIT_RESPAWN_SPACE = 5555.5f;
