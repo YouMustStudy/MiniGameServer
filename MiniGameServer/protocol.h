@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <cassert>
 
 //Server -> Client.
 enum SC_PACKET
@@ -17,7 +18,6 @@ enum SC_PACKET
 	SC_SPAWN_CHARACTER,			///< 캐릭터 오브젝트 추가
 	SC_DESTROY_CHARACTER,		///< 캐릭터 오브젝트 삭제
 	SC_ATTACK,					///< 캐릭터 공격
-	SC_GET_ITEM,				///< 캐릭터 아이템 획득
 	SC_CHANGE_HP,				///< 캐릭터 체력 변경
 	SC_CHANGE_LIFE,				///< 캐릭터 목숨 변경
 	SC_CHARACTER_INFO,			///< 캐릭터의 위치, 방향 등 값
@@ -49,10 +49,11 @@ enum SCENE_TYPE
 	SCENE_GAME
 };
 
-using PACKET_TYPE = unsigned char;
-using PACKET_SIZE = unsigned short;
+using PACKET_TYPE = uint8_t;
+using PACKET_SIZE = uint16_t;
 using UID = size_t;
-using SCENETYPE = unsigned char;
+using SCENETYPE = uint8_t;
+using CHARACTER_TYPE = uint8_t;
 constexpr size_t NAME_LENGTH = 20;
 
 #pragma pack(1)
@@ -83,7 +84,7 @@ public:
 	};
 };
 
-using LOGIN_FAIL_REASON = unsigned char;
+using LOGIN_FAIL_REASON = uint8_t;
 enum LOGIN_FAIL_REASON_ENUM
 {
 	LOGIN_FAIL_SAME_ID,
@@ -147,55 +148,43 @@ public:
 class SC_PACKET_TIME : public DEFAULT_PACKET
 {
 public:
-	SC_PACKET_TIME(unsigned int time) : time(time)
+	SC_PACKET_TIME(uint32_t time) : time(time)
 	{
 		size = sizeof(SC_PACKET_TIME);
 		type = SC_TIME;
 	};
-	unsigned int time;
+	uint32_t time;
 };
 
 class SC_PACKET_SPAWN_CHARACTER : public DEFAULT_PACKET
 {
 public:
-	SC_PACKET_SPAWN_CHARACTER(UID uid, unsigned char characterType, const std::string& userName, float x, float y) : uid(uid), characterType(characterType)
+	SC_PACKET_SPAWN_CHARACTER(UID uid, CHARACTER_TYPE characterType, const std::string& userName, float x, float y) : uid(uid), characterType(characterType)
 	{
 		size = sizeof(SC_PACKET_SPAWN_CHARACTER);
 		type = SC_SPAWN_CHARACTER;
 		pos[0] = x;
 		pos[1] = y;
 
-		strcpy_s<NAME_LENGTH+1>(name, userName.c_str());
-		/*size_t copyLen = (userName.size() < NAME_LENGTH) ? userName.size() : NAME_LENGTH;
-		memcpy(this->name, userName.c_str(), sizeof(wchar_t) * copyLen);*/
+		//오버플로우 방지
+		assert(NAME_LENGTH >= userName.size());
+		memcpy(name, userName.c_str(), userName.size());
 	};
 	UID uid{};
-	unsigned char characterType{};
-	char name[NAME_LENGTH + 1]{};
+	CHARACTER_TYPE characterType{};
+	uint8_t name[NAME_LENGTH + 1]{};
 	float pos[2]{};
 };
 
 class SC_PACKET_DESTROY_CHARACTER : public DEFAULT_PACKET
 {
 public:
-	SC_PACKET_DESTROY_CHARACTER(int uid) : uid(uid)
+	SC_PACKET_DESTROY_CHARACTER(UID uid) : uid(uid)
 	{
 		size = sizeof(SC_PACKET_DESTROY_CHARACTER);
 		type = SC_DESTROY_CHARACTER;
 	};
 	UID uid{};
-};
-
-class SC_PACKET_GET_ITEM : public DEFAULT_PACKET
-{
-public:
-	SC_PACKET_GET_ITEM(UID uid, int item) : uid(uid), item(item)
-	{
-		size = sizeof(SC_PACKET_GET_ITEM);
-		type = SC_GET_ITEM;
-	};
-	UID uid{};
-	int item{};
 };
 
 class SC_PACKET_CHANGE_HP : public DEFAULT_PACKET
@@ -272,13 +261,16 @@ public:
 class CS_PACKET_REQUEST_LOGIN : public DEFAULT_PACKET
 {
 public:
-	CS_PACKET_REQUEST_LOGIN()
+	CS_PACKET_REQUEST_LOGIN(CHARACTER_TYPE charType, const std::string& userName) : characterType(charType)
 	{
 		size = sizeof(CS_PACKET_REQUEST_LOGIN);
 		type = CS_REQUEST_LOGIN;
+		//오버플로우 방지
+		assert(NAME_LENGTH >= userName.size());
+		memcpy(name, userName.c_str(), userName.size());
 	};
-	char name[NAME_LENGTH + 1]{};
-	unsigned char characterType{};
+	CHARACTER_TYPE characterType{};
+	uint8_t name[NAME_LENGTH + 1]{};
 };
 
 class CS_PACKET_ATTACK : public DEFAULT_PACKET

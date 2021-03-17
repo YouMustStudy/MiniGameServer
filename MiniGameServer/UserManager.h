@@ -6,6 +6,7 @@
 #include "LockFreeQueue.h"
 #include "MatchQueue.h"
 #include "ServerConfig.h"
+#include "protocol.h"
 
 enum UserJobType
 {
@@ -25,10 +26,10 @@ struct AcceptInfo
 
 struct LoginInfo
 {
-	LoginInfo(size_t idx, const char* id, unsigned char characterType) : idx(idx), id(id), characterType(characterType) {};
+	LoginInfo(size_t idx, const char* id, CHARACTER_TYPE characterType) : idx(idx), id(id), characterType(characterType) {};
 	size_t idx;
 	std::string id;
-	unsigned char characterType;
+	CHARACTER_TYPE characterType;
 };
 
 class UserManager : public LockFreeQueue
