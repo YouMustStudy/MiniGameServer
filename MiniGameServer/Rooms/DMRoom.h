@@ -94,4 +94,8 @@ private:
 	Collider mapCollider{MAP_WIDTH, MAP_HEIGHT, {0, 0, 0} };	//맵의 충돌객체, 낙사 판정 시 사용
 	std::mt19937_64 randomEngine;
 	std::uniform_real_distribution<float> randomRange{-1.0f, 1.0f};
+
+
+	// 폭탄을 포함해서 증가하는 id
+	UID serverID = 0;
 };

@@ -51,10 +51,10 @@ void Character::SetAbility(unsigned char characterType)
 		_playerInfo.moveSpeed *= 1.0f;
 		break;
 
-	case 1: //¿¤ÇÁ
+	case 1: // ¿¤ÇÁ
 		_playerInfo.knockbackWeight *= 1.25f;
-		_playerInfo.attackPower *= 0.7f;
-		_playerInfo.moveSpeed *= 1.2f;
+		_playerInfo.attackPower *= 0.8f;
+		_playerInfo.moveSpeed *= 1.4f;
 		break;
 
 	case 2: //µå¿öÇÁ
@@ -63,10 +63,19 @@ void Character::SetAbility(unsigned char characterType)
 		_playerInfo.moveSpeed *= 0.8f;
 		break;
 
-	case 3: //´ÙÅ©¿¤ÇÁ
+	case 3: // ´ÙÅ©¿¤ÇÁ
 		_playerInfo.knockbackWeight *= 1.0f;
 		_playerInfo.attackPower *= 0.8f;
-		_playerInfo.moveSpeed *= 1.1f;
+		_playerInfo.moveSpeed *= 1.2f;
+		break;
+
+	case 4: // ÆøÅº
+		_playerInfo.knockbackWeight *= 1.7f;
+		_playerInfo.attackPower *= 2.5f;
+		_playerInfo.moveSpeed *= 1.0f;
+		_playerInfo.life = 1;
+		_attackColl._width = BOMB_HITBOX_WIDTH;
+		_attackColl._height = BOMB_HITBOX_HEIGHT;
 		break;
 	}
 }
@@ -75,6 +84,57 @@ void Character::UpdateState(float fTime)
 {
 	_playerInfo.animTime += fTime;
 	_playerInfo.invincibleTime += fTime;
+	_playerInfo.curBombTime -= fTime;
+
+	// ÆøÅº ÄÚµå
+	if(_playerInfo.isBomb == true && 0 >= _playerInfo.curBombTime)
+	{ 
+		switch (_playerInfo.curState)
+		{
+			case EState::IDLE:
+			{
+				_playerInfo.curState = EState::ATTACK_READY;
+				_playerInfo.animTime = 0.0f;
+
+				//°ø°ÝÆÐÅ¶ Áß°è
+				SC_PACKET_ATTACK atkPacket{ id };
+				if (nullptr != roomPtr)
+					roomPtr->infoData.EmplaceBack(&atkPacket, atkPacket.size);
+				break;
+			}
+			case EState::ATTACK_READY:
+			{
+				if (ATK_READY_TIME <= _playerInfo.animTime)
+				{
+					//°ø°Ý»óÅÂ·Î ÀüÀÌ
+					_playerInfo.curState = EState::ATTACK;
+					_playerInfo.animTime -= ATK_READY_TIME;
+					_attackColl._enabled = true;
+				}
+				break;
+			}
+			case EState::ATTACK:
+			{
+				if (ATK_TIME <= _playerInfo.animTime)
+				{
+					//ÆøÅº Á×ÀÌ±â
+					_playerInfo.curState = EState::IDLE;
+					_playerInfo.pos.x = WAIT_RESPAWN_SPACE;
+					_playerInfo.pos.y = WAIT_RESPAWN_SPACE;
+					_playerInfo.pos.z = DEATH_HEIGHT;
+
+					SC_PACKET_CHARACTER_INFO teleportPacket{ id,
+					WAIT_RESPAWN_SPACE, WAIT_RESPAWN_SPACE, DEATH_HEIGHT,
+					_playerInfo.dir.x, _playerInfo.dir.y, true };
+
+					if (nullptr != roomPtr)
+						roomPtr->infoData.EmplaceBack(&teleportPacket, teleportPacket.size);
+				}
+				break;
+			}
+		}
+	}
+
 	switch (_playerInfo.curState)
 	{
 	case EState::ATTACK_READY:

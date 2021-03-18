@@ -7,7 +7,7 @@ enum SC_PACKET
 {
 	//Main
 	SC_CONNECT_OK,				///< 연결 성공
-	//SC_DISCONNECT,			///< 서버에서 연결 종료
+	SC_DISCONNECT,				///< 서버에서 연결 종료
 	SC_LOGIN_OK,				///< 로그인 성공
 	SC_LOGIN_FAIL,				///< 로그인 실패
 	SC_CHANGE_QUEUE,			///< 매치큐 대기상태 변경
@@ -24,6 +24,7 @@ enum SC_PACKET
 	SC_CHARACTER_INFO,			///< 캐릭터의 위치, 방향 등 값
 	SC_SPAWN_EFFECT,			///< 타격모션 등 이펙트 출력
 	SC_USER_QUIT,				///< 게임 중 다른 유저의 종료를 통보
+	SC_SPAWN_BOMB,				///< 폭탄 스폰
 	SC_COUNT
 };
 
@@ -270,6 +271,26 @@ public:
 	};
 	UID uid{};
 };
+
+
+/// ///////////////////////////////////////////
+
+class SC_PACKET_SPAWN_BOMB : public DEFAULT_PACKET
+{
+public:
+	SC_PACKET_SPAWN_BOMB(UID uid, float x, float y) : uid(uid)
+	{
+		size = sizeof(SC_PACKET_SPAWN_BOMB);
+		type = SC_SPAWN_BOMB;
+		pos[0] = x;
+		pos[1] = y;
+	};
+	UID uid{};
+	float pos[2]{};
+};
+
+/// ///////////////////////////////////////////
+
 
 class CS_PACKET_REQUEST_LOGIN : public DEFAULT_PACKET
 {
