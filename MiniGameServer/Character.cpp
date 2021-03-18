@@ -216,7 +216,6 @@ void Character::UpdateState(float fTime)
 		}
 		break;
 	}
-
 	}
 }
 

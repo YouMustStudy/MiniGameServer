@@ -272,9 +272,6 @@ public:
 	UID uid{};
 };
 
-
-/// ///////////////////////////////////////////
-
 class SC_PACKET_SPAWN_BOMB : public DEFAULT_PACKET
 {
 public:
@@ -288,9 +285,6 @@ public:
 	UID uid{};
 	float pos[2]{};
 };
-
-/// ///////////////////////////////////////////
-
 
 class CS_PACKET_REQUEST_LOGIN : public DEFAULT_PACKET
 {

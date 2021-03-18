@@ -17,7 +17,6 @@ constexpr float MAP_WIDTH = 1000.0f;				//맵 가로크기
 constexpr float MAP_HEIGHT = 1000.0f;				//맵 세로크기
 
 //Characters
-
 constexpr float CHARACTER_HITBOX_WIDTH = 100.0f;			//캐릭터 히트박스 가로
 constexpr float CHARACTER_HITBOX_HEIGHT = 100.0f;			//캐릭터 히트박스 세로
 constexpr float ATTACK_HITBOX_WIDTH = 200.0f;				//캐릭터 공격 히트박스 가로
@@ -37,11 +36,11 @@ constexpr float ATK_TIME = 0.3333333f;				//공격 프레임은 15fps 기준으로 5프레임
 constexpr float DROP_SPEED = 5000.0f;				//중력
 constexpr float DEATH_HEIGHT = -1000.0f;			//죽는 높이
 constexpr float RESPAWN_TIME = 0.0f;				//리스폰 시간
-constexpr float DASH_WEIGHT = 0.5f;
+constexpr float DASH_WEIGHT = 0.5f;					//대쉬 가중치
 
 constexpr float WAIT_RESPAWN_SPACE = 5555.5f;	//캐릭터가 죽었을 때 잠깐 숨길 공간의 좌표(언리얼 KILLZ에 포함되면 안됨)
 
-constexpr int	BOMB_SPAWN_TIME = 10;
-constexpr float BOMB_TIME = 3.0f;		
-constexpr float BOMB_HITBOX_WIDTH = 350.0f;				
-constexpr float BOMB_HITBOX_HEIGHT = 300.0f;
+constexpr int	BOMB_SPAWN_TIME = 10;				//폭탄 리스폰 주기
+constexpr float BOMB_TIME = 3.0f;					//폭탄 터지는 시간
+constexpr float BOMB_HITBOX_WIDTH = 350.0f;			//폭탄 피격범위
+constexpr float BOMB_HITBOX_HEIGHT = 300.0f;		//폭탄 피격범위
