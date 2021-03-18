@@ -17,7 +17,7 @@ constexpr float MAP_WIDTH = 1000.0f;				//맵 가로크기
 constexpr float MAP_HEIGHT = 1000.0f;				//맵 세로크기
 
 //Characters
-//공식 1 / fps * animation frame
+
 constexpr float CHARACTER_HITBOX_WIDTH = 100.0f;			//캐릭터 히트박스 가로
 constexpr float CHARACTER_HITBOX_HEIGHT = 100.0f;			//캐릭터 히트박스 세로
 constexpr float ATTACK_HITBOX_WIDTH = 200.0f;				//캐릭터 공격 히트박스 가로
@@ -31,10 +31,12 @@ constexpr float INVINCIBLE_TIME = 1.0f;
 constexpr char CHARACTER_LIFE = 3;							//캐릭터 목숨
 constexpr int CHARACTER_MAX_HP = 3;							//캐릭터 생명력
 
+//공식 1 / fps * animation frame
 constexpr float ATK_READY_TIME = 0.1333333f;		//공격준비 프레임은 15fps 기준으로 2프레임
 constexpr float ATK_TIME = 0.3333333f;				//공격 프레임은 15fps 기준으로 5프레임
 constexpr float DROP_SPEED = 5000.0f;				//중력
 constexpr float DEATH_HEIGHT = -1000.0f;			//죽는 높이
 constexpr float RESPAWN_TIME = 0.0f;				//리스폰 시간
+constexpr float DASH_WEIGHT = 0.5f;
 
 constexpr float WAIT_RESPAWN_SPACE = 5555.5f;	//캐릭터가 죽었을 때 잠깐 숨길 공간의 좌표(언리얼 KILLZ에 포함되면 안됨)

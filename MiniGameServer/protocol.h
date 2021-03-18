@@ -7,6 +7,7 @@ enum SC_PACKET
 {
 	//Main
 	SC_CONNECT_OK,				///< 연결 성공
+	//SC_DISCONNECT,			///< 서버에서 연결 종료
 	SC_LOGIN_OK,				///< 로그인 성공
 	SC_LOGIN_FAIL,				///< 로그인 실패
 	SC_CHANGE_QUEUE,			///< 매치큐 대기상태 변경
@@ -22,7 +23,7 @@ enum SC_PACKET
 	SC_CHANGE_LIFE,				///< 캐릭터 목숨 변경
 	SC_CHARACTER_INFO,			///< 캐릭터의 위치, 방향 등 값
 	SC_SPAWN_EFFECT,			///< 타격모션 등 이펙트 출력
-	SC_USER_QUIT,
+	SC_USER_QUIT,				///< 게임 중 다른 유저의 종료를 통보
 	SC_COUNT
 };
 
@@ -56,6 +57,7 @@ using UID = size_t;
 using SCENETYPE = uint8_t;
 using CHARACTER_TYPE = uint8_t;
 using TIME_TYPE = uint16_t;
+using LOGIN_FAIL_REASON = uint8_t;
 constexpr size_t NAME_LENGTH = 20;
 
 #pragma pack(1)
@@ -76,6 +78,16 @@ public:
 	};
 };
 
+class SC_PACKET_DISCONNECT : public DEFAULT_PACKET
+{
+public:
+	SC_PACKET_DISCONNECT()
+	{
+		size = sizeof(SC_PACKET_DISCONNECT);
+		type = 1;
+	};
+};
+
 class SC_PACKET_LOGIN_OK : public DEFAULT_PACKET
 {
 public:
@@ -86,7 +98,6 @@ public:
 	};
 };
 
-using LOGIN_FAIL_REASON = uint8_t;
 enum LOGIN_FAIL_REASON_ENUM
 {
 	LOGIN_FAIL_SAME_ID,

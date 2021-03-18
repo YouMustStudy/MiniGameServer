@@ -66,8 +66,8 @@ void DMRoom::ProcessAttack(UID uid)
 		// 기존에 날라가던걸 덮어씌우지는 않는가?
 		// 대쉬 앵커
 		characterList[uid]._hitColl._attackedPos = Vector3d(
-			characterList[uid]._playerInfo.pos.x + characterList[uid]._playerInfo.dir.x * characterList[uid]._playerInfo.moveSpeed * deltaTime * 25.f,
-			characterList[uid]._playerInfo.pos.y + characterList[uid]._playerInfo.dir.y * characterList[uid]._playerInfo.moveSpeed * deltaTime * 25.f,
+			characterList[uid]._playerInfo.pos.x + characterList[uid]._playerInfo.dir.x * DASH_WEIGHT * characterList[uid]._playerInfo.moveSpeed ,
+			characterList[uid]._playerInfo.pos.y + characterList[uid]._playerInfo.dir.y * DASH_WEIGHT * characterList[uid]._playerInfo.moveSpeed ,
 			characterList[uid]._playerInfo.pos.z);
 		characterList[uid]._hitColl._bAttacked = true;
 
@@ -92,6 +92,7 @@ void DMRoom::ProcessMoveDir(MoveDirInfo* info)
 
 	Vector3d newDir{ info->x, info->y, 0.0f };
 	characterList[info->uid]._playerInfo.dir = newDir.normalize();
+
 	delete info;
 }
 
@@ -281,6 +282,9 @@ void DMRoom::Regist(std::vector<User*> users)
 	// [스폰데이터 | 게임 시작 시그널] 전송
 	SC_PACKET_CHANGE_SCENE changeScenePacket{ SCENE_GAME };
 	eventData.EmplaceBack(&changeScenePacket, changeScenePacket.size);
+	SC_PACKET_TIME timePacket{ (TIME_TYPE)DEFAULT_MATCH_TIME };
+	eventData.EmplaceBack(&timePacket, timePacket.size);
+
 	for (auto& user : userList)
 		MiniGameServer::Instance().SendPacket(user, eventData.data, eventData.len);
 	eventData.Clear();
