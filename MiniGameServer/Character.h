@@ -57,6 +57,9 @@ struct FPlayerInfo {
 		EWeaponType 	curWeapon{};	// 현재 무기
 		EState		curState{};			//현재 상태
 		float animTime{0.0f};
+
+		bool isBomb = {false};
+		float curBombTime{ BOMB_TIME };
 };
 
 // 콜라이더. 캐릭터는 attack(공격전용), hit(피격전용) 두 종류를 가지고 있다.
@@ -124,7 +127,10 @@ public:
 	void Update(float fTime);	//캐릭터 업데이트
 	void GetDamage(UID attacker);	//데미지 처리
 	void SetAbility(CHARACTER_TYPE characterType);	//캐릭터 타입에 대한 초기스텟 설정
-	bool IsAlive() { return 0 < _playerInfo.life; };	//이 캐릭터가 살아있는가?
+	bool IsAlive() { 
+		if(_playerInfo.isBomb == true) return false;
+		return 0 < _playerInfo.life; 
+	};	//이 캐릭터가 살아있는가?
 	bool IsInvincible() { return INVINCIBLE_TIME > _playerInfo.invincibleTime; };	//이 캐릭터가 무적인가?
 	
 private:

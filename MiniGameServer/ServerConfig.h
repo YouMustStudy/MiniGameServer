@@ -6,7 +6,7 @@ constexpr auto RECV_BUF_SIZE = 1024;									//수신버퍼 크기
 constexpr size_t THREAD_NUM = 10;										//WorkerThread 수
 constexpr short SERVER_PORT = 15600;									//서버 포트
 
-constexpr size_t REQUIRE_USER_NUM = 2;									//한 매치당 필요한 인원 수
+constexpr size_t REQUIRE_USER_NUM = 3;									//한 매치당 필요한 인원 수
 constexpr size_t MAX_USER_SIZE = 1000;									//서버에 접속할 수 있는 유저 수
 constexpr size_t MAX_ROOM_SIZE = MAX_USER_SIZE / REQUIRE_USER_NUM + 1;	//서버에 미리 만들어둘 방의 수
 
@@ -38,3 +38,8 @@ constexpr float DEATH_HEIGHT = -1000.0f;			//죽는 높이
 constexpr float RESPAWN_TIME = 0.0f;				//리스폰 시간
 
 constexpr float WAIT_RESPAWN_SPACE = 5555.5f;	//캐릭터가 죽었을 때 잠깐 숨길 공간의 좌표(언리얼 KILLZ에 포함되면 안됨)
+
+constexpr int	BOMB_SPAWN_TIME = 10;
+constexpr float BOMB_TIME = 3.0f;		
+constexpr float BOMB_HITBOX_WIDTH = 350.0f;				
+constexpr float BOMB_HITBOX_HEIGHT = 300.0f;

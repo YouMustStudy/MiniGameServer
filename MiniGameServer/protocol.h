@@ -23,7 +23,8 @@ enum SC_PACKET
 	SC_CHARACTER_INFO,			///< 캐릭터의 위치, 방향 등 값
 	SC_SPAWN_EFFECT,			///< 타격모션 등 이펙트 출력
 	SC_USER_QUIT,
-	SC_COUNT
+	SC_COUNT,
+	SC_SPAWN_BOMB
 };
 
 //Client -> Server.
@@ -259,6 +260,26 @@ public:
 	};
 	UID uid{};
 };
+
+
+/// ///////////////////////////////////////////
+
+class SC_PACKET_SPAWN_BOMB : public DEFAULT_PACKET
+{
+public:
+	SC_PACKET_SPAWN_BOMB(UID uid, float x, float y) : uid(uid)
+	{
+		size = sizeof(SC_PACKET_SPAWN_BOMB);
+		type = SC_SPAWN_BOMB;
+		pos[0] = x;
+		pos[1] = y;
+	};
+	UID uid{};
+	float pos[2]{};
+};
+
+/// ///////////////////////////////////////////
+
 
 class CS_PACKET_REQUEST_LOGIN : public DEFAULT_PACKET
 {

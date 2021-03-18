@@ -24,6 +24,7 @@ void DMRoom::Init()
 	infoData.Clear();
 	leftTime = DEFAULT_MATCH_TIME;
 	readyCount = 0;
+	serverID = 0;
 }
 
 void DMRoom::ProcessJob(Job job)
@@ -125,6 +126,20 @@ void DMRoom::UpdateLeftTime()
 		{
 			SC_PACKET_TIME timePacket{ curSecTime };
 			eventData.EmplaceBack(&timePacket, timePacket.size);
+
+			if (curSecTime % BOMB_SPAWN_TIME == 0) // 气藕 家券
+			{
+				Logger::Log("气藕积己");
+				characterList.emplace_back((UID)serverID, this);
+				characterList[serverID]._playerInfo.pos = Vector3d{ 0,0,0 };
+				characterList[serverID].SetAbility(4);
+				characterList[serverID]._playerInfo.isBomb = true;
+
+				SC_PACKET_SPAWN_BOMB spawnBombPacket{ serverID, 0, 0 };
+				eventData.EmplaceBack(&spawnBombPacket, spawnBombPacket.size);
+
+				serverID++;
+			}
 		}
 	}
 }
@@ -275,6 +290,8 @@ void DMRoom::Regist(std::vector<User*> users)
 
 			SC_PACKET_SPAWN_CHARACTER spawnCharacterPacket{ (UID)i, users[i]->characterType, users[i]->id, characterList[i]._playerInfo.initialPos.x, characterList[i]._playerInfo.initialPos.y };
 			eventData.EmplaceBack(&spawnCharacterPacket, spawnCharacterPacket.size);
+
+			serverID++;
 		}
 	}
 

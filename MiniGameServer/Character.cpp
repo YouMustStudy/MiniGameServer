@@ -68,20 +68,73 @@ void Character::SetAbility(unsigned char characterType)
 		_playerInfo.attackPower *= 0.8f;
 		_playerInfo.moveSpeed *= 1.2f;
 		break;
+
+	case 4: // 폭탄
+		_playerInfo.knockbackWeight *= 1.7f;
+		_playerInfo.attackPower *= 2.5f;
+		_playerInfo.moveSpeed *= 1.0f;
+		_playerInfo.life = 1;
+		_attackColl._width = BOMB_HITBOX_WIDTH;
+		_attackColl._height = BOMB_HITBOX_HEIGHT;
+		break;
 	}
 }
 
 void Character::UpdateState(float fTime)
 {
-	//공식 1 / fps * animation frame
-	static constexpr float ATK_READY_TIME = 0.1333333f;		//공격준비 프레임은 15fps 기준으로 2프레임
-	static constexpr float ATK_TIME = 0.3333333f;			//공격 프레임은 15fps 기준으로 5프레임
-	static const float DROP_SPEED = 5000.0f;				// 중력
-	static const float DEATH_HEIGHT = -1500.0f;				// 죽는 높이
-	static const float RESPAWN_TIME = 3.0f;					//리스폰 시간
-
 	_playerInfo.animTime += fTime;
 	_playerInfo.invincibleTime += fTime;
+	_playerInfo.curBombTime -= fTime;
+
+	// 폭탄 코드
+	if(_playerInfo.isBomb == true && 0 >= _playerInfo.curBombTime)
+	{ 
+		switch (_playerInfo.curState)
+		{
+			case EState::IDLE:
+			{
+				_playerInfo.curState = EState::ATTACK_READY;
+				_playerInfo.animTime = 0.0f;
+
+				//공격패킷 중계
+				SC_PACKET_ATTACK atkPacket{ id };
+				if (nullptr != roomPtr)
+					roomPtr->infoData.EmplaceBack(&atkPacket, atkPacket.size);
+				break;
+			}
+			case EState::ATTACK_READY:
+			{
+				if (ATK_READY_TIME <= _playerInfo.animTime)
+				{
+					//공격상태로 전이
+					_playerInfo.curState = EState::ATTACK;
+					_playerInfo.animTime -= ATK_READY_TIME;
+					_attackColl._enabled = true;
+				}
+				break;
+			}
+			case EState::ATTACK:
+			{
+				if (ATK_TIME <= _playerInfo.animTime)
+				{
+					//폭탄 죽이기
+					_playerInfo.curState = EState::IDLE;
+					_playerInfo.pos.x = WAIT_RESPAWN_SPACE;
+					_playerInfo.pos.y = WAIT_RESPAWN_SPACE;
+					_playerInfo.pos.z = DEATH_HEIGHT;
+
+					SC_PACKET_CHARACTER_INFO teleportPacket{ id,
+					WAIT_RESPAWN_SPACE, WAIT_RESPAWN_SPACE, DEATH_HEIGHT,
+					_playerInfo.dir.x, _playerInfo.dir.y, true };
+
+					if (nullptr != roomPtr)
+						roomPtr->infoData.EmplaceBack(&teleportPacket, teleportPacket.size);
+				}
+				break;
+			}
+		}
+	}
+
 	switch (_playerInfo.curState)
 	{
 	case EState::ATTACK_READY:
