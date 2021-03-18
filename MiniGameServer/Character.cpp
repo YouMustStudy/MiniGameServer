@@ -102,6 +102,7 @@ void Character::UpdateState(float fTime)
 					roomPtr->infoData.EmplaceBack(&atkPacket, atkPacket.size);
 				break;
 			}
+
 			case EState::ATTACK_READY:
 			{
 				if (ATK_READY_TIME <= _playerInfo.animTime)
@@ -113,6 +114,7 @@ void Character::UpdateState(float fTime)
 				}
 				break;
 			}
+
 			case EState::ATTACK:
 			{
 				if (ATK_TIME <= _playerInfo.animTime)

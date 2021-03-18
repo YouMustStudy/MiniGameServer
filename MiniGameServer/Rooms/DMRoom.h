@@ -95,7 +95,6 @@ private:
 	std::mt19937_64 randomEngine;
 	std::uniform_real_distribution<float> randomRange{-1.0f, 1.0f};
 
-
 	// 폭탄을 포함해서 증가하는 id
 	UID serverID = 0;
 };

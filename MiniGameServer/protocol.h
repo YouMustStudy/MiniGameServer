@@ -54,7 +54,7 @@ enum SCENE_TYPE
 //타입 정의
 using PACKET_TYPE = uint8_t;
 using PACKET_SIZE = uint16_t;
-using UID = size_t;
+using UID = uint64_t;
 using SCENETYPE = uint8_t;
 using CHARACTER_TYPE = uint8_t;
 using TIME_TYPE = uint16_t;
@@ -217,13 +217,13 @@ public:
 class SC_PACKET_CHANGE_LIFE : public DEFAULT_PACKET
 {
 public:
-	SC_PACKET_CHANGE_LIFE(UID uid, char life) : uid(uid), life(life)
+	SC_PACKET_CHANGE_LIFE(UID uid, int8_t life) : uid(uid), life(life)
 	{
 		size = sizeof(SC_PACKET_CHANGE_LIFE);
 		type = SC_CHANGE_LIFE;
 	};
 	UID uid{};
-	char life;
+	int8_t life;
 };
 
 class SC_PACKET_CHARACTER_INFO : public DEFAULT_PACKET
