@@ -2,6 +2,7 @@
 #include "Utills/Vector3d.h"
 #include "protocol.h"
 #include "ServerConfig.h"
+#include "Common/User.h"
 
 struct Collider;
 
@@ -122,6 +123,7 @@ public:
 	Collider _attackColl;		// 공격 콜라이더
 	UID id{(UID)-1};			// UID
 	DMRoom* roomPtr{nullptr};	// 방에 작업 추가용 포인터
+	User* userPtr{nullptr};
 
 	bool operator==(const Character& other) { return id == other.id; };
 	void Update(float fTime);	//캐릭터 업데이트

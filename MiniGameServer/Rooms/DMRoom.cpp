@@ -102,7 +102,7 @@ void DMRoom::ProcessReady(UID uid)
 	if (false == characterList[uid]._playerInfo.isReady)
 	{
 		characterList[uid]._playerInfo.isReady = true;
-		if (++readyCount == characterList.size())
+		if (++readyCount == userList.size())
 		{
 			//이후 업데이트 구문 추가
 			//레디가 오기전에 유저 종료가 발생하면?
@@ -138,7 +138,6 @@ void DMRoom::UpdateLeftTime()
 
 				SC_PACKET_SPAWN_BOMB spawnBombPacket{ serverID, 0, 0 };
 				eventData.EmplaceBack(&spawnBombPacket, spawnBombPacket.size);
-
 				serverID++;
 			}
 		}
@@ -282,6 +281,7 @@ void DMRoom::Regist(std::vector<User*> users)
 			userList.emplace_back(users[i]);
 			characterList.emplace_back((UID)i, this);
 
+			characterList[i].userPtr = users[i];
 			characterList[i]._playerInfo.initialPos = initialPos[i % _countof(initialPos)];
 			characterList[i]._playerInfo.pos = characterList[i]._playerInfo.initialPos;
 			characterList[i].SetAbility(users[i]->characterType);
@@ -291,7 +291,6 @@ void DMRoom::Regist(std::vector<User*> users)
 
 			SC_PACKET_SPAWN_CHARACTER spawnCharacterPacket{ (UID)i, users[i]->characterType, users[i]->id, characterList[i]._playerInfo.initialPos.x, characterList[i]._playerInfo.initialPos.y };
 			eventData.EmplaceBack(&spawnCharacterPacket, spawnCharacterPacket.size);
-
 			serverID++;
 		}
 	}
@@ -317,8 +316,19 @@ void DMRoom::Disconnect(User* user)
 		auto iter = std::find(userList.begin(), userList.end(), user);
 		if (iter != userList.end())
 		{
-			//레디 시그널이 오기 전 종료라면? 확인해보자
-			UID uid = (UID)std::distance(userList.begin(), iter);
+			UID uid{(UID)-1};
+			for (auto& ch : characterList)
+			{
+				if (user == ch.userPtr)
+				{
+					uid = ch.id;
+					ch.userPtr = nullptr;
+					break;
+				}
+			}			
+			if (-1 == uid) return;
+
+			//게임 시작전 상태라면 레디처리.
 			ProcessReady(uid);
 
 			//유저 삭제처리
@@ -374,6 +384,6 @@ void DMRoom::QuitAllUser()
 	SC_PACKET_CHANGE_SCENE changeScenePacket{ SCENE_MAIN };
 	for (auto& user : userList)
 		MiniGameServer::Instance().SendPacket(user, &changeScenePacket, changeScenePacket.size);
-	for (auto& user : userList)
-		Disconnect(user);
+	while(false == userList.empty())
+		Disconnect(userList.front());
 }
