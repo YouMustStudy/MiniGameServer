@@ -6,9 +6,11 @@ constexpr auto RECV_BUF_SIZE = 1024;									//수신버퍼 크기
 constexpr size_t THREAD_NUM = 10;										//WorkerThread 수
 constexpr short SERVER_PORT = 15600;									//서버 포트
 
-constexpr size_t REQUIRE_USER_NUM = 4;									//한 매치당 필요한 인원 수
+constexpr size_t REQUIRE_USER_NUM = 2;									//한 매치당 필요한 인원 수
 constexpr size_t MAX_USER_SIZE = 1000;									//서버에 접속할 수 있는 유저 수
 constexpr size_t MAX_ROOM_SIZE = MAX_USER_SIZE / REQUIRE_USER_NUM + 1;	//서버에 미리 만들어둘 방의 수
+
+constexpr const char* CONFIG_PATH{ ".\\CONFIG.ini" };
 
 //DMRooms
 constexpr long long UPDATE_INTERVAL = 20;			//업데이트 간격

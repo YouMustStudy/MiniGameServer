@@ -9,6 +9,11 @@ UserManager& UserManager::Instance()
 	return *userManager;
 }
 
+void UserManager::SetRequireUserNum(size_t num)
+{
+	matchQueue.SetRequireUserNum(num);
+}
+
 void UserManager::ProcessJob(Job job)
 {
 	switch (job.first)

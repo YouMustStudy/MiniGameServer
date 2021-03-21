@@ -64,9 +64,24 @@ void MiniGameServer::InitRooms()
 	Logger::Log("Initializing Rooms...");
 }
 
+void MiniGameServer::GenDefaultConfig()
+{
+	WritePrivateProfileStringA("SERVER_CONFIG", "REQUIRE_USER_NUM", std::to_string(REQUIRE_USER_NUM).c_str(), CONFIG_PATH);
+}
+
 void MiniGameServer::LoadConfig()
 {
 	Logger::Log("Load Config...");
+	constexpr size_t BUF_SIZE = 1024;
+
+	std::ifstream ini{ CONFIG_PATH };
+	if (false == ini.is_open())
+		GenDefaultConfig();
+	ini.close();
+
+	char buffer[BUF_SIZE];
+	GetPrivateProfileStringA("SERVER_CONFIG", "REQUIRE_USER_NUM", std::to_string(REQUIRE_USER_NUM).c_str(), buffer, BUF_SIZE, CONFIG_PATH);
+	UserManager::Instance().SetRequireUserNum(std::stoi(buffer));
 }
 
 void MiniGameServer::Run()

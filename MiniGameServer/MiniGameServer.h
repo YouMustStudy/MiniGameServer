@@ -52,9 +52,10 @@ private:
 	void InitRooms();
 
 	/**
-	@brief 옵션값을 읽어온다. - 아직 미구현
+	@brief 옵션값을 읽어온다.
 	*/
 	void LoadConfig();
+	void GenDefaultConfig();
 
 	/**
 	@brief 타이머 이벤트를 추가한다.
@@ -81,6 +82,7 @@ private:
 	@brief 타이머 스레드 함수
 	*/
 	void TimerThread();
+
 	/**
 	@brief 작업 스레드 함수
 	*/

@@ -19,6 +19,8 @@ class MatchQueue
 	using UserQueue = std::list<size_t>;
 
 public:
+	void SetRequireUserNum(size_t num) { m_matchNum = num; };
+
 	void Enqueue(size_t idx);
 	void Dequeue(size_t idx);
 
