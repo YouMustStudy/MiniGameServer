@@ -41,6 +41,9 @@ constexpr float DASH_WEIGHT = 0.5f;					//대쉬 가중치
 constexpr float WAIT_RESPAWN_SPACE = 5555.5f;	//캐릭터가 죽었을 때 잠깐 숨길 공간의 좌표(언리얼 KILLZ에 포함되면 안됨)
 
 constexpr int	BOMB_SPAWN_TIME = 10;				//폭탄 리스폰 주기
-constexpr float BOMB_TIME = 3.0f;					//폭탄 터지는 시간
-constexpr float BOMB_HITBOX_WIDTH = 350.0f;			//폭탄 피격범위
-constexpr float BOMB_HITBOX_HEIGHT = 300.0f;		//폭탄 피격범위
+constexpr int	SUPER_BOMB_SPAWN_TIME = 45;			//서든데스폭탄 리스폰 주기
+constexpr float BOMB_TIME = 3.0f;					//폭탄 터지는 시간	
+constexpr float BOMB_ATTACKBOX_WIDTH = 350.0f;			//폭탄 공격범위
+constexpr float BOMB_ATTACKBOX_HEIGHT = 300.0f;			//폭탄 공격범위
+constexpr float BOMB_HITBOX_WIDTH = 150.0f;				//폭탄 피격범위
+constexpr float BOMB_HITBOX_HEIGHT = 150.0f;			//폭탄 피격범위

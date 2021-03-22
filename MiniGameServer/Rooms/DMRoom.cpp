@@ -128,7 +128,23 @@ void DMRoom::UpdateLeftTime()
 			SC_PACKET_TIME timePacket{ curSecTime };
 			eventData.EmplaceBack(&timePacket, timePacket.size);
 
-			if (curSecTime % BOMB_SPAWN_TIME == 0) // 폭탄 소환
+			if (curSecTime % SUPER_BOMB_SPAWN_TIME == 0) // 4개 폭탄 소환
+			{
+				for (int i = 0; i < 4; i++)
+				{
+					Logger::Log("폭탄생성");
+					characterList.emplace_back((UID)serverID, this);
+					characterList[serverID]._playerInfo.pos = initialPos[ i ];
+					characterList[serverID].SetAbility(4);
+					characterList[serverID]._playerInfo.isBomb = true;
+
+					SC_PACKET_SPAWN_BOMB spawnBombPacket{ serverID,initialPos[i].x, initialPos[i].y };
+					eventData.EmplaceBack(&spawnBombPacket, spawnBombPacket.size);
+
+					serverID++;
+				}
+			}
+			else if (curSecTime % BOMB_SPAWN_TIME == 0) // 폭탄 소환
 			{
 				Logger::Log("폭탄생성");
 				characterList.emplace_back((UID)serverID, this);
@@ -141,6 +157,7 @@ void DMRoom::UpdateLeftTime()
 
 				serverID++;
 			}
+
 		}
 	}
 }
@@ -161,6 +178,8 @@ void DMRoom::UpdateCollider()
 		{
 			if (chA == chB) continue;	// 내 자신은 공격 못한다.
 			if (true == chB.IsInvincible()) continue;
+			if (chA._playerInfo.isBomb == true && chB._playerInfo.isBomb == true) continue; // 둘 다 폭탄이면 충돌 체크 안함 
+			if (chB._hitColl._enabled == false) continue; // 맞는 캐릭터의 hitColl이 활성화 안되면 충돌 패스
 			if (true == CheckCollider(chA.GetAttackCollider(), chB.GetHitCollider())) // AttackColl, HitColl 충돌 체크
 			{
 				/* 피격체의 콜라이더를 피격당한상태로 바꾸고, 밀려날 위치를 부여한다. */

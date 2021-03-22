@@ -2,8 +2,8 @@
 #include "Rooms/DMRoom.h"
 
 Character::Character(UID id, DMRoom* roomPtr)
-	:_hitColl(CHARACTER_HITBOX_WIDTH, CHARACTER_HITBOX_HEIGHT, Vector3d(0.0, 0.0, 0.0)),
-	_attackColl(ATTACK_HITBOX_WIDTH, ATTACK_HITBOX_HEIGHT, Vector3d(0.0, 0.0, 0.0)),
+	:_hitColl(CHARACTER_HITBOX_WIDTH, CHARACTER_HITBOX_HEIGHT, Vector3d(0.0, 0.0, 0.0), true),
+	_attackColl(ATTACK_HITBOX_WIDTH, ATTACK_HITBOX_HEIGHT, Vector3d(0.0, 0.0, 0.0), false),
 	id(id), roomPtr(roomPtr)
 {
 }
@@ -74,8 +74,10 @@ void Character::SetAbility(unsigned char characterType)
 		_playerInfo.attackPower *= 2.5f;
 		_playerInfo.moveSpeed *= 1.0f;
 		_playerInfo.life = 1;
-		_attackColl._width = BOMB_HITBOX_WIDTH;
-		_attackColl._height = BOMB_HITBOX_HEIGHT;
+		_attackColl._width = BOMB_ATTACKBOX_WIDTH;
+		_attackColl._height = BOMB_ATTACKBOX_HEIGHT;
+		_hitColl._width = BOMB_HITBOX_WIDTH;
+		_hitColl._height = BOMB_HITBOX_HEIGHT;
 		break;
 	}
 }
@@ -95,6 +97,7 @@ void Character::UpdateState(float fTime)
 			{
 				_playerInfo.curState = EState::ATTACK_READY;
 				_playerInfo.animTime = 0.0f;
+				_hitColl._enabled = false; // 터지면 폭탄 다시 공격못하게
 
 				//공격패킷 중계
 				SC_PACKET_ATTACK atkPacket{ id };
