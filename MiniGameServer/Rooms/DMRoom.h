@@ -91,7 +91,7 @@ private:
 		{600.0f, 600.0f, 0.0f},
 	};
 
-	Collider mapCollider{MAP_WIDTH, MAP_HEIGHT, {0, 0, 0} };	//¸ÊÀÇ Ãæµ¹°´Ã¼, ³«»ç ÆÇÁ¤ ½Ã »ç¿ë
+	Collider mapCollider{MAP_WIDTH, MAP_HEIGHT, {0, 0, 0}, true};	//¸ÊÀÇ Ãæµ¹°´Ã¼, ³«»ç ÆÇÁ¤ ½Ã »ç¿ë
 	std::mt19937_64 randomEngine;
 	std::uniform_real_distribution<float> randomRange{-1.0f, 1.0f};
 

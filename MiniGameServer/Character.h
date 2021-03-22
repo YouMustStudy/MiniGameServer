@@ -73,11 +73,12 @@ struct Collider {
 	bool	_bAttacked{false};				// 공격 당한 상태 (HitCollider 전용)
 	Vector3d _attackedPos{0, 0, 0};			// 밀려나서 가야할 위치 + 대쉬 위치 (HitCollider 전용)
 
-	Collider(float width, float height, Vector3d pos)
+	Collider(float width, float height, Vector3d pos, bool enabled)
 	{
 		_pos = pos;
 		_width = width;
 		_height = height;
+		_enabled = enabled;
 	}
 
 	float GetMinX() const { return _pos.x - _width; }
