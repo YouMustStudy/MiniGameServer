@@ -14,26 +14,28 @@ enum LOG_TYPE
 
 class Logger
 {
+private:
+	static std::string LogFileName[ LOG_COUNT ]; ///< 로그가 저장될 파일 이름들.
+
 public:
 	/**
 	*@brief 콘솔과 파일에 [시간] msg 꼴로 출력하는 로그 함수.
 	*@param[in] msg 출력할 메세지.
+	*@param[in] time 시간 기록 여부.
 	*/
-	static void Log(const std::string& msg, bool time = true);
+	static void Log( const std::string& msg, bool time = true );
 
 	/**
 	*@brief WSA관련 오류를 서버 콘솔에 출력 및 로그파일로 저장한다. [시간][유저주소][Error] Msg 의 양식으로 생성.
 	*@param[in] msg 유저 주소의 문자열.
 	*@param[in] errNo 오류 코드.
 	*/
-	static void WsaLog(const std::string& msg, int errNo);
+	static void WsaLog( const std::string& msg, int errNo );
 
 	/**
 	*@brief 로그 파일이 저장될 경로 등록.
 	*@param[in] type 패스를 저장할 로그의 타입, LOG_TYPE 참조.
 	*@param[in] path 로그 파일 경로.
 	*/
-	static void SetLogPath(int type, const std::string& path);
-private:
-	static std::string LogFileName[LOG_COUNT];
+	static void SetLogPath( int type, const std::string& path );
 };

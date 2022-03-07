@@ -3,5 +3,5 @@
 int main()
 {
 	MiniGameServer::Instance().Run();
-	return 0 ;
+	return 0;
 }

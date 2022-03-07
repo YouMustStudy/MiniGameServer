@@ -8,33 +8,42 @@
 class CSOCKADDR_IN
 {
 private:
-	int size; ///< size of SOCKADDR_IN.
+	int         size; ///< size of SOCKADDR_IN.
 	SOCKADDR_IN addr; ///< SOCKADDR_IN structure.
 
 public:
 	CSOCKADDR_IN();
 
 	/**
-	@brief Constructor for unsigned long type addr. no need to convert NW ENDIAN.
+	*@brief Constructor for unsigned long type addr. no need to convert NW ENDIAN.
+	*@param[in] addr Address.
+	*@param[in] port.
 	*/
 	CSOCKADDR_IN(unsigned long addr, short port);
+
 	/**
-	@brief Constructor for char type addr.
+	*@brief Constructor for char type addr.
+	*@param[in] addr Address.
+	*@param[in] port.
 	*/
 	CSOCKADDR_IN(const char* addr, short port);
+
 	/**
-	@brief Constructor for char type addr.
+	*@brief Constructor for char type addr.
+	*@param[in] addr Address.
+	*@param[in] port.
 	*/
 	CSOCKADDR_IN(const wchar_t* addr, short port);
 
 	/**
-	@brief return pointer of size. remember it can be changed.
-	@return pointer of int type size.
+	*@brief return pointer of size. remember it can be changed.
+	*@return pointer of int type size.
 	*/
 	int* Len();
+
 	/**
-	@brief return pointer of SOCKADDR_IN.
-	@return pointer of SOCKADDR_IN to SOCKADDR type.
+	*@brief return pointer of SOCKADDR_IN.
+	*@return pointer of SOCKADDR_IN to SOCKADDR type.
 	*/
 	SOCKADDR* GetSockAddr();
 };

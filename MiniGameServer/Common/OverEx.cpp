@@ -1,62 +1,69 @@
 #include "OverEx.h"
 #include "..\protocol.h"
 
-OverEx::~OverEx() {
-	if (packet != nullptr) {
+OverEx::~OverEx() 
+{
+	if( packet != nullptr ) {
 		delete[] packet;
 		packet = nullptr;
 	}
 }
 
 OverEx::OverEx() :
-	ev_type(0),
-	packet(nullptr),
-	over(),
-	wsabuf()
-{}
-OverEx::OverEx(int ev) :
-	ev_type(ev),
-	packet(nullptr),
+	ev_type( 0 ),
+	packet( nullptr ),
 	over(),
 	wsabuf()
 {
 }
-OverEx::OverEx(int ev, size_t buf_size) :
-	OverEx(ev)
+
+OverEx::OverEx( int ev ) :
+	ev_type( ev ),
+	packet( nullptr ),
+	over(),
+	wsabuf()
 {
-	Init(buf_size);
 }
 
-OverEx::OverEx(int ev, void* buff) :
-	OverEx(ev)
+OverEx::OverEx( int ev, size_t buf_size ) :
+	OverEx( ev )
 {
-	DEFAULT_PACKET* cdp = reinterpret_cast<DEFAULT_PACKET*>(buff);
-	Init(cdp->size);
-	memcpy(packet, buff, cdp->size);
+	Init( buf_size );
 }
 
-OverEx::OverEx(int ev, void* buff, size_t buf_size) :
-	OverEx(ev)
+OverEx::OverEx( int ev, void* buff ) :
+	OverEx( ev )
 {
-	Init(buf_size);
-	memcpy(packet, buff, buf_size);
+	DEFAULT_PACKET* cdp = reinterpret_cast<DEFAULT_PACKET*>( buff );
+	Init( cdp->size );
+	memcpy( packet, buff, cdp->size );
 }
-void OverEx::Init(size_t buf_size)
+
+OverEx::OverEx( int ev, void* buff, size_t buf_size ) :
+	OverEx( ev )
 {
-	if (packet != nullptr) {
+	Init( buf_size );
+	memcpy( packet, buff, buf_size );
+}
+
+void OverEx::Init( size_t buf_size )
+{
+	if( packet != nullptr ) {
 		delete[] packet;
 		packet = nullptr;
 	}
-	packet = new char[buf_size];
-	memset(&over, 0, sizeof(WSAOVERLAPPED));
+	packet = new char[ buf_size ];
+	memset( &over, 0, sizeof( WSAOVERLAPPED ) );
 	wsabuf.buf = packet;
-	wsabuf.len = static_cast<ULONG>(buf_size);
+	wsabuf.len = static_cast<ULONG>( buf_size );
 }
+
 void OverEx::Reset()
 {
-	memset(&over, 0, sizeof(WSAOVERLAPPED));
+	memset( &over, 0, sizeof( WSAOVERLAPPED ) );
 }
-void OverEx::SetEvent(int ev)
+
+void OverEx::SetEvent( int ev )
 {
 	ev_type = ev;
 }
